@@ -279,7 +279,7 @@ class Arcball(customtkinter.CTk):
             self.pressed = True # Bool to control(activate) a drag (click+move)
             x_fig,y_fig= self.canvas_coordinates_to_figure_coordinates(event.x,event.y) #Extract viewport coordinates
 
-            r2 = (x_fig**2 + y_fig**2)*2  #radius
+            r2 = 1.7  #radius
          
             distance = x_fig**2 + y_fig**2
             if(distance < r2/2):
@@ -301,7 +301,7 @@ class Arcball(customtkinter.CTk):
         if self.pressed: #Only triggered if previous click
             x_fig,y_fig= self.canvas_coordinates_to_figure_coordinates(event.x,event.y) #Extract viewport coordinates
 
-            r2 = (x_fig**2 + y_fig**2)*2   #radius
+            r2 = 1.7 #radius
 
             distance = x_fig**2 + y_fig**2
             if(distance < r2/2):
@@ -309,7 +309,11 @@ class Arcball(customtkinter.CTk):
                 z_fig = np.sqrt (r2 - x_fig**2 - y_fig**2)
              
             else:
-                z_fig= (r2 / (2 * np.sqrt(distance))) / np.linalg.norm(r2 / (2 * np.sqrt(distance)))
+                div = np.linalg.norm(r2 / 2 * np.sqrt(distance))
+                div2 = 2 * np.sqrt(distance)
+                res = div2/div
+                z_fig= r2 / ((2 * np.sqrt(distance)) / div)
+            
             
             m1 = np.array([x_fig, y_fig,z_fig])
             m0 = self.prevPoint
@@ -324,6 +328,7 @@ class Arcball(customtkinter.CTk):
             #Caclulate angle
             angle = np.arccos(dot_product / (norm_m1 * norm_m0))
             
+            print(angle)
             # Calculate the quaternion for the rotation
             new_q = self.QuatRotation1(angle, m1, m0)
             
@@ -404,21 +409,17 @@ class Arcball(customtkinter.CTk):
         q2 = q[2]
         q3 = q[3]
 
-        R = np.array([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]])
-        R[0,0] = q0**2 + q1**2 - q2**2 - q3**2
-        R[0,1] = 2 * (q1 * q2 - q0 * q3)
-        R[0,2] = 2 * (q1 * q3 + q0 * q2)
-
-        R[1,0] = 2 * (q1 * q2 + q0 * q3)
-        R[1,1] = q0**2 - q1**2 + q2**2 - q3**2
-        R[1,2] = 2 * (q2 * q3 - q0 * q1)
-
-        R[2,0] = 2 * (q1 * q3 - q0 * q2)
-        R[2,1] = 2 * (q2 * q3 + q0 * q1)
-        R[2,2] = q0**2 - q1**2 - q2**2 + q3**2
+        w, x, y, z = q
+        # Calcula los elementos de la matriz de rotación
+        R = np.array([
+            [1 - 2 * (y**2 + z**2), 2 * (x * y - w * z),     2 * (x * z + w * y)],
+            [2 * (x * y + w * z),     1 - 2 * (x**2 + z**2), 2 * (y * z - w * x)],
+            [2 * (x * z - w * y),     2 * (y * z + w * x),     1 - 2 * (x**2 + y**2)]])
 
         # Build the rotation matrix using the expanded formula
-        
+        R = R.reshape(3, -1)
+        R[np.isclose(R,0)] = 0
+
         return R
     
     def calculate_cuaternion(self,angle,m1,m0):

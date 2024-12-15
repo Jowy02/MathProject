@@ -23,7 +23,7 @@ class Arcball(customtkinter.CTk):
         self.rotv = np.array([[0],[0],[0]])
         self.euler = np.array([[0],[0],[0]])
         self.prevQuat = np.array([[1],[1],[1],[1]])
-        self.prevPoint = np.array([[0],[0],[0]])
+        self.prevPoint = np.array([0,0,0])
         self.rot = np.array([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
         # configure window
         self.title("Holroyd's arcball")
@@ -278,20 +278,21 @@ class Arcball(customtkinter.CTk):
         if event.button:
             self.pressed = True # Bool to control(activate) a drag (click+move)
             x_fig,y_fig= self.canvas_coordinates_to_figure_coordinates(event.x,event.y) #Extract viewport coordinates
-
+            
             m1 = np.array([x_fig, y_fig, 1])
-            m0 = np.array([self.prevPoint[0], self.prevPoint[1], 1])
+            m0 = np.array([self.prevPoint[0], self.prevPoint[1],1])
            
             r = np.cross(m0, np.transpose(m1))
-            r2 = np.linalg.norm(r)**2
-         
+            r2 = np.linalg.norm(r)**2         
+            
             distance = x_fig**2 + y_fig**2
+            
             if(distance < r2/2):
                 
-                z_fig = np.sqrt (r2 - x_fig**2 - y_fig**2)
+                z_fig = np.sqrt (r2 - distance)
              
             else:
-             z_fig= r2 / ((2 * np.sqrt(distance)) )
+               z_fig= (r2 / (2 * np.sqrt(distance)))
             
             self.prevPoint = np.array([x_fig, y_fig,z_fig])
 
@@ -306,18 +307,19 @@ class Arcball(customtkinter.CTk):
             x_fig,y_fig= self.canvas_coordinates_to_figure_coordinates(event.x,event.y) #Extract viewport coordinates
 
             m1 = np.array([x_fig, y_fig, 1])
-            m0 = np.array([self.prevPoint[0], self.prevPoint[1],1])
+            m0 = np.array([self.prevPoint[0], self.prevPoint[1], 1])
            
             r = np.cross(m0, np.transpose(m1))
-            r2 = np.linalg.norm(r)**2         
-
+            r2 = np.linalg.norm(r)**2
+           
             distance = x_fig**2 + y_fig**2
+
             if(distance < r2/2):
                 
-                z_fig = np.sqrt (r2 - x_fig**2 - y_fig**2)
+                z_fig = np.sqrt (r2 - distance)
              
             else:
-                 z_fig= r2 / ((2 * np.sqrt(distance)) )
+                z_fig= r2 / ((2 * np.sqrt(distance)) )
             
             
             m1 = np.array([x_fig, y_fig,z_fig])
@@ -352,6 +354,7 @@ class Arcball(customtkinter.CTk):
             self.rot = R
 
             self.M = R.dot(self.M) #Modify the vertices matrix with a rotation matrix M
+
             self.update_cube() #Update the cube
             self.fig.canvas.draw_idle()
 
@@ -444,8 +447,8 @@ class Arcball(customtkinter.CTk):
     def QuatRotation1 (self,angle, m1, m0):
         axis = np.cross(m0,m1)
         #calculo quaternion
-        if(axis[0]*axis[0] + axis[1]+axis[1] + axis[2]*axis[2] != 1):
-            axis = axis/np.linalg.norm(axis)
+        #if(axis[0]*axis[0] + axis[1]+axis[1] + axis[2]*axis[2] != 1):
+        axis = axis/np.linalg.norm(axis)
 
         quat = np.zeros((4,1))
         quat[0] = np.cos(angle)

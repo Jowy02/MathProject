@@ -279,7 +279,11 @@ class Arcball(customtkinter.CTk):
             self.pressed = True # Bool to control(activate) a drag (click+move)
             x_fig,y_fig= self.canvas_coordinates_to_figure_coordinates(event.x,event.y) #Extract viewport coordinates
 
-            r2 = 1.7  #radius
+            m1 = np.array([x_fig, y_fig, 1])
+            m0 = np.array([self.prevPoint[0], self.prevPoint[1], 1])
+           
+            r = np.cross(m0, np.transpose(m1))
+            r2 = np.linalg.norm(r)**2
          
             distance = x_fig**2 + y_fig**2
             if(distance < r2/2):
@@ -287,7 +291,7 @@ class Arcball(customtkinter.CTk):
                 z_fig = np.sqrt (r2 - x_fig**2 - y_fig**2)
              
             else:
-               z_fig= (r2 / (2 * np.sqrt(distance))) / np.linalg.norm(r2 / (2 * np.sqrt(distance)))
+             z_fig= r2 / ((2 * np.sqrt(distance)) )
             
             self.prevPoint = np.array([x_fig, y_fig,z_fig])
 
@@ -301,7 +305,11 @@ class Arcball(customtkinter.CTk):
         if self.pressed: #Only triggered if previous click
             x_fig,y_fig= self.canvas_coordinates_to_figure_coordinates(event.x,event.y) #Extract viewport coordinates
 
-            r2 = 1.7 #radius
+            m1 = np.array([x_fig, y_fig, 1])
+            m0 = np.array([self.prevPoint[0], self.prevPoint[1],1])
+           
+            r = np.cross(m0, np.transpose(m1))
+            r2 = np.linalg.norm(r)**2         
 
             distance = x_fig**2 + y_fig**2
             if(distance < r2/2):
@@ -309,10 +317,7 @@ class Arcball(customtkinter.CTk):
                 z_fig = np.sqrt (r2 - x_fig**2 - y_fig**2)
              
             else:
-                div = np.linalg.norm(r2 / 2 * np.sqrt(distance))
-                div2 = 2 * np.sqrt(distance)
-                res = div2/div
-                z_fig= r2 / ((2 * np.sqrt(distance)) / div)
+                 z_fig= r2 / ((2 * np.sqrt(distance)) )
             
             
             m1 = np.array([x_fig, y_fig,z_fig])
@@ -324,9 +329,10 @@ class Arcball(customtkinter.CTk):
 
             # Dot product
             dot_product = np.dot(m1, np.transpose(m0))
-           
+            dot_product = np.clip(dot_product / (norm_m1 * norm_m0), -1.0, 1.0) #Evitar errores numéricos
+
             #Caclulate angle
-            angle = np.arccos(dot_product / (norm_m1 * norm_m0))
+            angle = np.arccos(dot_product)
             
             print(angle)
             # Calculate the quaternion for the rotation
@@ -347,6 +353,8 @@ class Arcball(customtkinter.CTk):
 
             self.M = R.dot(self.M) #Modify the vertices matrix with a rotation matrix M
             self.update_cube() #Update the cube
+            self.fig.canvas.draw_idle()
+
             self.prevPoint = m1
 
     def onrelease(self,event):

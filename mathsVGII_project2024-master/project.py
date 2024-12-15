@@ -334,7 +334,7 @@ class Arcball(customtkinter.CTk):
             dot_product = np.clip(dot_product / (norm_m1 * norm_m0), -1.0, 1.0) #Evitar errores numéricos
 
             #Caclulate angle
-            angle = np.arccos(dot_product)
+            angle = np.arccos(dot_product)/10
             
             print(angle)
             # Calculate the quaternion for the rotation

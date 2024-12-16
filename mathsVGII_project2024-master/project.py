@@ -313,6 +313,56 @@ class Arcball(customtkinter.CTk):
         """
         Event triggered function on the event of a push on the button button_rotV 
         """
+        new_axis=np.array([float(self.entry_rotV_1.get()),float(self.entry_rotV_2.get()), float(self.entry_rotV_3.get())])
+
+       
+        if np.all(self.prevPoint == 0):
+            print("Warning: self.prevPoint is zero, initializing to [1, 0, 0]")
+            self.prevPoint = np.array([1, 0, 0])
+        m0=self.prevPoint
+        #Normalize Vector
+        norm_new_axis = np.linalg.norm(new_axis)
+        norm_m0 = np.linalg.norm(m0)
+
+        # Dot product
+        dot_product = np.dot(new_axis, np.transpose(m0))
+        dot_product = np.clip(dot_product / (norm_new_axis * norm_m0), -1.0, 1.0) #Evitar errores numéricos
+              
+        #Caclulate angle
+        angle = np.arccos(dot_product)
+        
+        print(angle)
+        # Calculate the quaternion for the rotation
+        new_q = self.QuatRotation1(angle, new_axis, m0)
+        
+        if (self.prueba == True):
+            self.prevQuat = self.Quatmult(new_q, self.prevQuat) #Quaternion multiplication
+        
+        else:
+            self.prevQuat = new_q
+            self.prueba = True
+        
+        # Convert quaternion to rotation matrix
+        R = np.array([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
+
+        R = self.quaternion_to_rotation_matrix(self.prevQuat)
+        self.rot = R
+
+        self.M = R.dot(self.M) #Modify the vertices matrix with a rotation matrix M
+
+        self.update_cube() #Update the cube
+        
+        self.fig.canvas.draw_idle()
+
+        self.prevPoint = new_axis
+
+        self.updateText(self.rot)
+        self.entry_rotV_1.delete(0, "end")
+        self.entry_rotV_1.insert(0, "0.0")  #Initial value for rotV1
+        self.entry_rotV_2.delete(0, "end")
+        self.entry_rotV_2.insert(0, "0.0")  #Initial value for rotV2
+        self.entry_rotV_3.delete(0, "end")
+        self.entry_rotV_3.insert(0, "0.0")  #Initial value for rotV3
         pass
 
     

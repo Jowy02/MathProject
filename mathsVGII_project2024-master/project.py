@@ -356,7 +356,61 @@ class Arcball(customtkinter.CTk):
         """
         Event triggered function on the event of a push on the button button_quat
         """
+        q0 = float(self.entry_quat_0.get())
+        q1 = float(self.entry_quat_1.get())
+        q2 = float(self.entry_quat_2.get())
+        q3 = float(self.entry_quat_3.get())
+
+        # El cuaternión introducido por el usuario
+        user_quat = np.array([q0, q1, q2, q3])
+        user_quat=user_quat/np.linalg.norm(user_quat)
+        if (self.prueba == True):
+            self.prevQuat = self.Quatmult_apply_quat(user_quat, self.prevQuat) #Quaternion multiplication
+        
+        else:
+            self.prevQuat = user_quat
+            self.prueba = True
+        
+        # Convert quaternion to rotation matrix
+        R = np.array([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
+
+        R = self.quaternion_to_rotation_matrix(self.prevQuat)
+        
+        self.M = R.dot(self.M) #Modify the vertices matrix with a rotation matrix M
+
+        self.update_cube() #Update the cube
+        self.fig.canvas.draw_idle()
+
+        
+        self.prevPoint = np.array([q1, q2, q3])
+
+   
+        self.updateText(R)
+        self.entry_quat_0.delete(0, "end")
+        self.entry_quat_0.insert(0, "1.0")  #Initial value for q0
+        self.entry_quat_1.delete(0, "end")
+        self.entry_quat_1.insert(0, "0.0")  #Initial value for q1
+        self.entry_quat_2.delete(0, "end")
+        self.entry_quat_2.insert(0, "0.0")  #Initial value for q2
+        self.entry_quat_3.delete(0, "end")
+        self.entry_quat_3.insert(0, "0.0")  #Initial value for q3
+
         pass
+
+    def Quatmult_apply_quat(self, q,p):
+
+        q0 = q[0]
+        qv = q[1:]
+
+        p0 = p[0]
+        pv = p[1:]
+
+        qp = np.zeros((4))
+
+        qp[0] = q0*p0 - qv.T.dot(pv)
+        qp[1:] = q0*pv + p0*qv + np.cross(qv,pv)
+
+        return qp
 
     
     def onclick(self, event):

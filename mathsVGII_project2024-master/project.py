@@ -427,7 +427,7 @@ class Arcball(customtkinter.CTk):
             sign = np.sign(np.dot(r, [0, 0, 1]))
            
             #Caclulate angle
-            angle = np.arccos(dot_product)/10
+            angle = sign* np.arccos(dot_product)/10
             
             print(angle)
             # Calculate the quaternion for the rotation

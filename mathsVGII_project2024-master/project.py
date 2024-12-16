@@ -114,13 +114,13 @@ class Arcball(customtkinter.CTk):
         self.tabview.tab("Euler angles").grid_columnconfigure(0, weight=1)
         self.tabview.tab("Euler angles").grid_columnconfigure(1, weight=0)
         
-        self.label_EA_roll= customtkinter.CTkLabel(self.tabview.tab("Euler angles"), text="roll:")
+        self.label_EA_roll= customtkinter.CTkLabel(self.tabview.tab("Euler angles"), text="roll (degrees):")
         self.label_EA_roll.grid(row=0, column=0, padx=(2,0), pady=(50,0), sticky="e")
 
-        self.label_EA_pitch= customtkinter.CTkLabel(self.tabview.tab("Euler angles"), text="pitch:")
+        self.label_EA_pitch= customtkinter.CTkLabel(self.tabview.tab("Euler angles"), text="pitch (degrees):")
         self.label_EA_pitch.grid(row=1, column=0, padx=(2,0), pady=(5,0), sticky="e")
 
-        self.label_EA_yaw= customtkinter.CTkLabel(self.tabview.tab("Euler angles"), text="yaw:")
+        self.label_EA_yaw= customtkinter.CTkLabel(self.tabview.tab("Euler angles"), text="yaw (degrees):")
         self.label_EA_yaw.grid(row=2, column=0, rowspan=3, padx=(2,0), pady=(5,10), sticky="e")
 
         self.entry_EA_roll = customtkinter.CTkEntry(self.tabview.tab("Euler angles"))
@@ -310,6 +310,45 @@ class Arcball(customtkinter.CTk):
         """
         Event triggered function on the event of a push on the button button_EA
         """
+        #Get the values
+        roll= float(self.entry_EA_roll.get())
+        pitch=float(self.entry_EA_pitch.get())
+        yaw= float(self.entry_EA_yaw.get())
+
+        #Convert angle from degrees
+        roll=roll*np.pi/180
+        pitch=pitch*np.pi/180
+        yaw=yaw*np.pi/180
+
+        #Define the rotation matrix for yaw 
+        Rz=np.array([
+            [np.cos(yaw), -np.sin(yaw), 0],
+            [np.sin(yaw), np.cos(yaw), 0],
+            [0, 0, 1]])
+      
+        #Define the rotation matrix for pitch 
+        Ry=np.array([
+            [np.cos(pitch), 0, np.sin(pitch)],
+            [0, 1, 0],
+            [-np.sin(pitch), 0, np.cos(pitch)]])
+        
+        #Define the rotation matrix for roll 
+        Rx=np.array([
+            [1, 0, 0],
+            [0, np.cos(roll), -np.sin(roll)],
+            [0, np.sin(roll), np.cos(roll)]])
+        
+        #Rotation
+        R=Rz.dot(Ry).dot(Rx)
+
+        self.rot = R
+        self.M = R.dot(self.M)
+
+        self.update_cube()
+        self.fig.canvas.draw_idle()
+
+        self.updateText(self.rot)
+
         pass
 
     

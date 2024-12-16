@@ -422,7 +422,10 @@ class Arcball(customtkinter.CTk):
             # Dot product
             dot_product = np.dot(m1, np.transpose(m0))
             dot_product = np.clip(dot_product / (norm_m1 * norm_m0), -1.0, 1.0) #Evitar errores numéricos
-
+            
+            #Calculate the sign of the angle
+            sign = np.sign(np.dot(r, [0, 0, 1]))
+           
             #Caclulate angle
             angle = np.arccos(dot_product)/10
             

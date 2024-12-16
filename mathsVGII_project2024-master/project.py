@@ -297,13 +297,13 @@ class Arcball(customtkinter.CTk):
 
         self.updateText(self.rot)
         self.entry_AA_ax1.delete(0, "end")
-        self.entry_AA_ax1.insert(0, "1.0")  #Initial value for q0
+        self.entry_AA_ax1.insert(0, "1.0")  #Initial value for axis1
         self.entry_AA_ax2.delete(0, "end")
-        self.entry_AA_ax2.insert(0, "0.0")  #Initial value for q1
+        self.entry_AA_ax2.insert(0, "0.0")  #Initial value for axis2
         self.entry_AA_ax3.delete(0, "end")
-        self.entry_AA_ax3.insert(0, "0.0")  #Initial value for q2
+        self.entry_AA_ax3.insert(0, "0.0")  #Initial value for axis3
         self.entry_AA_angle.delete(0, "end")
-        self.entry_AA_angle.insert(0, "0.0")  #Initial value for q3
+        self.entry_AA_angle.insert(0, "0.0")  #Initial value for angle
 
         pass
 

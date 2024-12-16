@@ -245,6 +245,11 @@ class Arcball(customtkinter.CTk):
 
         self.update_cube() #Update the cube
 
+        R = np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]) #Update rotation. Initial rotation
+        self.rot = R
+
+        self.updateText(self.rot)
+
         pass
 
 

@@ -348,6 +348,13 @@ class Arcball(customtkinter.CTk):
         self.fig.canvas.draw_idle()
 
         self.updateText(self.rot)
+        self.entry_EA_roll.delete(0, "end")
+        self.entry_EA_roll.insert(0, "0.0")  #Initial value for roll
+        self.entry_EA_pitch.delete(0, "end")
+        self.entry_EA_pitch.insert(0, "0.0")  #Initial value for pitch
+        self.entry_EA_yaw.delete(0, "end")
+        self.entry_EA_yaw.insert(0, "0.0")  #Initial value for yaw
+      
 
         pass
 

@@ -79,7 +79,7 @@ class Arcball(customtkinter.CTk):
         self.entry_AA_ax3.insert(0,"0.0")
         self.entry_AA_ax3.grid(row=2, column=1, padx=(5, 0), pady=(5, 10), sticky="ew")
 
-        self.label_AA_angle = customtkinter.CTkLabel(self.tabview.tab("Axis angle"), text="Angle:")
+        self.label_AA_angle = customtkinter.CTkLabel(self.tabview.tab("Axis angle"), text="Angle (degrees):")
         self.label_AA_angle.grid(row=3, column=0, padx=(120,0), pady=(10, 20),sticky="w")
         self.entry_AA_angle = customtkinter.CTkEntry(self.tabview.tab("Axis angle"))
         self.entry_AA_angle.insert(0,"0.0")
@@ -258,9 +258,45 @@ class Arcball(customtkinter.CTk):
         Event triggered function on the event of a push on the button button_AA
         """
         #Example on hot to get values from entries:
-        angle = self.entry_AA_angle.get()
-        #Example string to number
-        print(float(angle)*2)
+        angle = (float(self.entry_AA_angle.get()))
+        angle=angle*np.pi/180 #Convert degrees to radians
+        
+        #Get the values of the components of the rotation axis
+        axis=np.array([float(self.entry_AA_ax1.get()),float(self.entry_AA_ax2.get()), float(self.entry_AA_ax3.get())])
+
+        #Calculate the magnitude (norm) of the rotation axis vector
+        magnitud = np.linalg.norm(axis)
+        if(magnitud == 0): return axis
+        else: vectorN = axis/ magnitud #Normalize the axis vector
+
+        matriuR3 = np.array([[          0, -vectorN[2],     vectorN[1]],
+                            [ vectorN[2],           0,    -vectorN[0]],
+                            [-vectorN[1],  vectorN[0],              0]])
+
+        vectorN = vectorN.reshape(-1,1)
+
+        I = np.eye(3)
+        #Calculate the first part of the rotation matrix
+        matriuR1 = I * np.cos(angle)
+
+        #Calculate the second part of the rotation matrix
+        matriuR2 = (1-np.cos(angle))*(vectorN @ np.transpose(vectorN))
+
+        #Calculate the third part of the rotation matrix
+        matriuR3 = np.sin(angle)*matriuR3
+        # Combine all parts
+        R = matriuR1 + matriuR2 + matriuR3
+       
+        self.rot = R
+       
+        self.M = R.dot(self.M)
+        
+        self.update_cube()
+       
+        self.fig.canvas.draw_idle()
+
+        self.updateText(self.rot)
+
 
     
     def apply_rotV(self):

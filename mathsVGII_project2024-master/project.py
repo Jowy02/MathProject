@@ -520,36 +520,43 @@ class Arcball(customtkinter.CTk):
             if magnitud != 0:
                deltaquat = deltaquat / magnitud
             
-            self.prevQuat = self.Quatmult(deltaquat, self.prevQuat)
+            self.prevQuat = deltaquat
             
-            R = np.array([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
-    
-            R = self.quaternion_to_rotation_matrix(self.prevQuat)
-            self.rot = R
 
-            self.M = R.dot(self.M) #Modify the vertices matrix with a rotation matrix M
+            q = np.squeeze(self.prevQuat)
+            rotated = np.array([
+                self.quaternion_rotate_vector(q, self.M[:, i])
+                for i in range(self.M.shape[1])])
+            self.M = rotated.T
 
             self.update_cube() #Update the cube
             self.fig.canvas.draw_idle()
 
             self.prevPoint = m1
 
+    def quaternion_rotate_vector(self, q, v):
+        """Rota un vector v usando el cuaternión q."""
+        w, x, y, z = q
+        q_vector = np.array([0, *v])
+        q_conjugate = np.array([w, -x, -y, -z])
+
+        result = self.quaternion_multiply( self.quaternion_multiply(q, q_vector), q_conjugate)
+        return result[1:]  # Devuelve solo la parte vectorial
+
     def takePoint(self,x_fig,y_fig):
-        r=1
+        
+        r=np.sqrt(3)
         
         distance = x_fig**2 + y_fig**2
 
-        if(distance < r**2/2):
+        if(distance < (r**2)/2):
             
             z_fig = np.sqrt (r**2 - x_fig**2 - y_fig**2)
             
         else:
-            z_fig= r**2 / ((2 * np.sqrt(distance)) )
-            
-            factor = r / np.sqrt(distance + z_fig**2)
-            x_fig *= factor
-            y_fig *= factor
-            z_fig*=factor
+            div = r**2 / (2 * np.sqrt(distance)) 
+            div2 =np.linalg.norm(r**2 / (2 * np.sqrt(distance)))
+            z_fig = div/div2
         
         m = np.array([x_fig, y_fig,z_fig])
         return m
@@ -626,7 +633,17 @@ class Arcball(customtkinter.CTk):
         R[np.isclose(R,0)] = 0
 
         return R
-    
+
+    def quaternion_multiply(self, q1, q2):
+        """Multiplica dos cuaterniones q1 y q2."""
+        w1, x1, y1, z1 = q1
+        w2, x2, y2, z2 = q2
+        w = w1 * w2 - x1 * x2 - y1 * y2 - z1 * z2
+        x = w1 * x2 + x1 * w2 + y1 * z2 - z1 * y2
+        y = w1 * y2 - x1 * z2 + y1 * w2 + z1 * x2
+        z = w1 * z2 + x1 * y2 - y1 * x2 + z1 * w2
+        return np.array([w, x, y, z])
+
     def Quatmult(self, q,p):
 
         q0 = q[0]

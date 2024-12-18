@@ -489,7 +489,8 @@ class Arcball(customtkinter.CTk):
             x_fig,y_fig= self.canvas_coordinates_to_figure_coordinates(event.x,event.y) #Extract viewport coordinates
            
             self.prevPoint = self.takePoint(x_fig,y_fig)
-            print(self.prevPoint)
+            self.prevPoint = self.prevPoint / np.linalg.norm(self.prevPoint)
+            #print(self.prevPoint)
 
           
     def onmove(self,event):
@@ -503,34 +504,26 @@ class Arcball(customtkinter.CTk):
            
             m1 = self.takePoint(x_fig,y_fig)
             m0 = self.prevPoint
-            print(m1)
+            #print(m1)
 
             #Normalize Vector
             norm_m1 = np.linalg.norm(m1)
+            m1 = m1/norm_m1
             norm_m0 = np.linalg.norm(m0)
 
             # Dot product
-            dot_product = np.dot(np.transpose(m0),m1)
+            dot_product = np.dot(m0.T,m1)
             cross_product = np.cross(m0,m1)
-            #deltaquat = np.array([norm_m0 * norm_m1 + dot_product, cross_product[0],cross_product[1],cross_product[2]])
-            
-
-
-            # Escalar para reducir la velocidad
-            scale_factor = 0.1
-            deltaquat = np.array([
-            norm_m0 * norm_m1 + dot_product,
-            cross_product[0] * scale_factor,
-            cross_product[1] * scale_factor,
-            cross_product[2] * scale_factor
-            ])
-
+            deltaquat = np.array([norm_m0 * norm_m1 + dot_product, cross_product[0],cross_product[1],cross_product[2]])
+    
             # Calcula la norma (magnitud) del cuaternión
             magnitud = np.linalg.norm(deltaquat)
             
             if magnitud != 0:
                deltaquat = deltaquat / magnitud
-               
+
+            print(deltaquat)
+            
             self.prevQuat = self.quaternion_multiply(deltaquat, self.prevQuat)
             
             q = np.squeeze(self.prevQuat)
@@ -540,7 +533,6 @@ class Arcball(customtkinter.CTk):
             self.M = rotated.T
 
             self.update_cube() #Update the cube
-            self.fig.canvas.draw_idle()
             self.prevPoint = m1
 
     def quaternion_rotate_vector(self, q, v):
@@ -561,13 +553,15 @@ class Arcball(customtkinter.CTk):
         if(distance < (r**2)/2):
             
             z_fig = np.sqrt (r**2 - x_fig**2 - y_fig**2)
+            m = np.array([x_fig, y_fig,z_fig]).T
             
         else:
-            div = r**2 / (2 * np.sqrt(distance)) 
-            div2 =np.linalg.norm(r**2 / (2 * np.sqrt(distance)))
-            z_fig = div/div2
-        
-        m = np.array([x_fig, y_fig,z_fig])
+            z_fig = r**2 / (2 * np.sqrt(distance)) 
+            m = np.array([x_fig, y_fig,z_fig]).T
+            div = np.linalg.norm(m)
+            m = (r*m)/div
+           
+       
         return m
 
     def onrelease(self,event):

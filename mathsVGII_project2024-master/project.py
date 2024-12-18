@@ -512,18 +512,28 @@ class Arcball(customtkinter.CTk):
             # Dot product
             dot_product = np.dot(np.transpose(m0),m1)
             cross_product = np.cross(m0,m1)
-            deltaquat = np.array([norm_m0 * norm_m1 + dot_product, cross_product[0],cross_product[1],cross_product[2]])
-            
-            # Calcula la norma (magnitud) del cuaternión
-            magnitud = np.linalg.norm(deltaquat)
-    
-            if magnitud != 0:
-               deltaquat = deltaquat / magnitud
-            
-            
+            #deltaquat = np.array([norm_m0 * norm_m1 + dot_product, cross_product[0],cross_product[1],cross_product[2]])
             
 
-            q = np.squeeze(deltaquat)
+
+            # Escalar para reducir la velocidad
+            scale_factor = 0.1
+            deltaquat = np.array([
+            norm_m0 * norm_m1 + dot_product,
+            cross_product[0] * scale_factor,
+            cross_product[1] * scale_factor,
+            cross_product[2] * scale_factor
+            ])
+
+            # Calcula la norma (magnitud) del cuaternión
+            magnitud = np.linalg.norm(deltaquat)
+            
+            if magnitud != 0:
+               deltaquat = deltaquat / magnitud
+               
+            self.prevQuat = self.quaternion_multiply(deltaquat, self.prevQuat)
+            
+            q = np.squeeze(self.prevQuat)
             rotated = np.array([
                 self.quaternion_rotate_vector(q, self.M[:, i])
                 for i in range(self.M.shape[1])])
@@ -531,7 +541,6 @@ class Arcball(customtkinter.CTk):
 
             self.update_cube() #Update the cube
             self.fig.canvas.draw_idle()
-            self.prevQuat = self.Quatmult(deltaquat, self.prevQuat)
             self.prevPoint = m1
 
     def quaternion_rotate_vector(self, q, v):
@@ -643,21 +652,6 @@ class Arcball(customtkinter.CTk):
         y = w1 * y2 - x1 * z2 + y1 * w2 + z1 * x2
         z = w1 * z2 + x1 * y2 - y1 * x2 + z1 * w2
         return np.array([w, x, y, z])
-
-    def Quatmult(self, q,p):
-
-        q0 = q[0]
-        qv = q[1:]
-
-        p0 = p[0,0]
-        pv = p[1:,0]
-
-        qp = np.zeros((4,1))
-
-        qp[0,0] = q0*p0 - qv.T.dot(pv)
-        qp[1:,0] = q0*pv + p0*qv + np.cross(qv,pv)
-
-        return qp
 
 
     def init_cube(self):

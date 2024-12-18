@@ -22,7 +22,7 @@ class Arcball(customtkinter.CTk):
         self.AA = {"axis": np.array([[0],[0],[0]]), "angle":0.0}
         self.rotv = np.array([[0],[0],[0]])
         self.euler = np.array([[0],[0],[0]])
-        self.prevQuat = np.array([[1],[1],[1],[1]])
+        self.prevQuat = np.array([[1],[0],[0],[0]])
         self.prevPoint = np.array([0,0,0])
         self.rot = np.array([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
         # configure window
@@ -247,7 +247,7 @@ class Arcball(customtkinter.CTk):
 
         R = np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]) #Update rotation. Initial rotation
         self.rot = R
-
+        self.prevQuat = np.array([[1],[0],[0],[0]])
         self.updateText(self.rot)
 
         pass
@@ -329,7 +329,7 @@ class Arcball(customtkinter.CTk):
         dot_product = np.clip(dot_product / (norm_new_axis * norm_m0), -1.0, 1.0) #Evitar errores numéricos
               
         #Caclulate angle
-        angle = np.arccos(dot_product)
+        angle = np.arccos(dot_product)/10
         
         print(angle)
         # Calculate the quaternion for the rotation
@@ -484,28 +484,12 @@ class Arcball(customtkinter.CTk):
         """
         Event triggered function on the event of a mouse click inside the figure canvas
         """
-        print("Pressed button", event.button)
-
         if event.button:
             self.pressed = True # Bool to control(activate) a drag (click+move)
             x_fig,y_fig= self.canvas_coordinates_to_figure_coordinates(event.x,event.y) #Extract viewport coordinates
-            
-            m1 = np.array([x_fig, y_fig, 1])
-            m0 = np.array([self.prevPoint[0], self.prevPoint[1],1])
            
-            r = np.cross(m0, np.transpose(m1))
-            r2 = np.linalg.norm(r)**2         
-            
-            distance = x_fig**2 + y_fig**2
-            
-            if(distance < r2/2):
-                
-                z_fig = np.sqrt (r2 - distance)
-             
-            else:
-               z_fig= (r2 / (2 * np.sqrt(distance)))
-            
-            self.prevPoint = np.array([x_fig, y_fig,z_fig])
+            self.prevPoint = self.takePoint(x_fig,y_fig)
+            print(self.prevPoint)
 
           
     def onmove(self,event):
@@ -516,52 +500,28 @@ class Arcball(customtkinter.CTk):
         #Example
         if self.pressed: #Only triggered if previous click
             x_fig,y_fig= self.canvas_coordinates_to_figure_coordinates(event.x,event.y) #Extract viewport coordinates
-
-            m1 = np.array([x_fig, y_fig, 1])
-            m0 = np.array([self.prevPoint[0], self.prevPoint[1], 1])
            
-            r = np.cross(m0, np.transpose(m1))
-            r2 = np.linalg.norm(r)**2
-           
-            distance = x_fig**2 + y_fig**2
-
-            if(distance < r2/2):
-                
-                z_fig = np.sqrt (r2 - distance)
-             
-            else:
-                z_fig= r2 / ((2 * np.sqrt(distance)) )
-            
-            
-            m1 = np.array([x_fig, y_fig,z_fig])
+            m1 = self.takePoint(x_fig,y_fig)
             m0 = self.prevPoint
+            print(m1)
 
             #Normalize Vector
             norm_m1 = np.linalg.norm(m1)
             norm_m0 = np.linalg.norm(m0)
 
             # Dot product
-            dot_product = np.dot(m1, np.transpose(m0))
-            dot_product = np.clip(dot_product / (norm_m1 * norm_m0), -1.0, 1.0) #Evitar errores numéricos
+            dot_product = np.dot(np.transpose(m0),m1)
+            cross_product = np.cross(m0,m1)
+            deltaquat = np.array([norm_m0 * norm_m1 + dot_product, cross_product[0],cross_product[1],cross_product[2]])
             
-            #Calculate the sign of the angle
-            sign = np.sign(np.dot(r, [0, 0, 1]))
-           
-            #Caclulate angle
-            angle = sign* np.arccos(dot_product)/10
+            # Calcula la norma (magnitud) del cuaternión
+            magnitud = np.linalg.norm(deltaquat)
+    
+            if magnitud != 0:
+               deltaquat = deltaquat / magnitud
             
-            print(angle)
-            # Calculate the quaternion for the rotation
-            new_q = self.QuatRotation1(angle, m1, m0)
+            self.prevQuat = self.Quatmult(deltaquat, self.prevQuat)
             
-            if (self.prueba == True):
-                self.prevQuat = self.Quatmult(new_q, self.prevQuat) #Quaternion multiplication
-           
-            else:
-                self.prevQuat = new_q
-                self.prueba = True
-            
-            # Convert quaternion to rotation matrix
             R = np.array([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
     
             R = self.quaternion_to_rotation_matrix(self.prevQuat)
@@ -573,6 +533,24 @@ class Arcball(customtkinter.CTk):
             self.fig.canvas.draw_idle()
 
             self.prevPoint = m1
+
+    def takePoint(self,x_fig,y_fig):
+        r2 = (np.sqrt(3))**2
+        
+        distance = x_fig**2 + y_fig**2
+
+        if(distance < r2/2):
+            
+            z_fig = np.sqrt (r2 - x_fig**2 - y_fig**2)
+            
+        else:
+            div = r2 /(2 * np.sqrt(distance)) 
+            div2 = np.linalg.norm(r2 /(2 * np.sqrt(distance)))
+            z_fig = div/div2
+            
+        
+        m = np.array([x_fig, y_fig,z_fig])
+        return m
 
     def onrelease(self,event):
         """
@@ -647,33 +625,10 @@ class Arcball(customtkinter.CTk):
 
         return R
     
-    def calculate_cuaternion(self,angle,m1,m0):
-        # Calculate cross product
-        product_vectorial=np.cross(m0,m1)
-         
-        # Quaternion formula
-        q=np.array([[np.cos(angle/2)],
-                    [np.sin(angle/2) * product_vectorial[0]],
-                    [np.sin(angle/2) * product_vectorial[1]],
-                    [np.sin(angle/2) * product_vectorial[2]]])
-        return q
-    
-    def QuatRotation1 (self,angle, m1, m0):
-        axis = np.cross(m0,m1)
-        #calculo quaternion
-        #if(axis[0]*axis[0] + axis[1]+axis[1] + axis[2]*axis[2] != 1):
-        axis = axis/np.linalg.norm(axis)
-
-        quat = np.zeros((4,1))
-        quat[0] = np.cos(angle)
-        quat[1:,0] = axis*np.sin(angle)
-
-        return quat
-
     def Quatmult(self, q,p):
 
-        q0 = q[0,0]
-        qv = q[1:,0]
+        q0 = q[0]
+        qv = q[1:]
 
         p0 = p[0,0]
         pv = p[1:,0]

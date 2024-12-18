@@ -520,10 +520,10 @@ class Arcball(customtkinter.CTk):
             if magnitud != 0:
                deltaquat = deltaquat / magnitud
             
-            self.prevQuat = deltaquat
+            
             
 
-            q = np.squeeze(self.prevQuat)
+            q = np.squeeze(deltaquat)
             rotated = np.array([
                 self.quaternion_rotate_vector(q, self.M[:, i])
                 for i in range(self.M.shape[1])])
@@ -531,7 +531,7 @@ class Arcball(customtkinter.CTk):
 
             self.update_cube() #Update the cube
             self.fig.canvas.draw_idle()
-
+            self.prevQuat = self.Quatmult(deltaquat, self.prevQuat)
             self.prevPoint = m1
 
     def quaternion_rotate_vector(self, q, v):

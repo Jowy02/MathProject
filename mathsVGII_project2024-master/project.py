@@ -513,7 +513,7 @@ class Arcball(customtkinter.CTk):
 
             # Dot product
             dot_product = np.dot(m0.T,m1)
-            cross_product = np.cross(m0,m1)
+            cross_product = np.cross(m0,m1).T
             deltaquat = np.array([norm_m0 * norm_m1 + dot_product, cross_product[0],cross_product[1],cross_product[2]])
     
             # Calcula la norma (magnitud) del cuaternión
@@ -521,9 +521,7 @@ class Arcball(customtkinter.CTk):
             
             if magnitud != 0:
                deltaquat = deltaquat / magnitud
-
-            print(deltaquat)
-            
+               
             self.prevQuat = self.quaternion_multiply(deltaquat, self.prevQuat)
             
             q = np.squeeze(self.prevQuat)

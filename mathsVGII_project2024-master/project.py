@@ -535,19 +535,21 @@ class Arcball(customtkinter.CTk):
             self.prevPoint = m1
 
     def takePoint(self,x_fig,y_fig):
-        r2 = (np.sqrt(3))**2
+        r=1
         
         distance = x_fig**2 + y_fig**2
 
-        if(distance < r2/2):
+        if(distance < r**2/2):
             
-            z_fig = np.sqrt (r2 - x_fig**2 - y_fig**2)
+            z_fig = np.sqrt (r**2 - x_fig**2 - y_fig**2)
             
         else:
-            div = r2 /(2 * np.sqrt(distance)) 
-            div2 = np.linalg.norm(r2 /(2 * np.sqrt(distance)))
-            z_fig = div/div2
+            z_fig= r**2 / ((2 * np.sqrt(distance)) )
             
+            factor = r / np.sqrt(distance + z_fig**2)
+            x_fig *= factor
+            y_fig *= factor
+            z_fig*=factor
         
         m = np.array([x_fig, y_fig,z_fig])
         return m

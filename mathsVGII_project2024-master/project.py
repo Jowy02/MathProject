@@ -271,6 +271,8 @@ class Arcball(customtkinter.CTk):
         self.update_cube()
        
         self.fig.canvas.draw_idle()
+        self.rot = self.quaternion_to_rotation_matrix(self.prevQuat)
+        self.updateText(self.rot)
         pass
 
     
@@ -292,7 +294,8 @@ class Arcball(customtkinter.CTk):
         self.update_cube()
        
         self.fig.canvas.draw_idle()
-        
+        self.rot = self.quaternion_to_rotation_matrix(self.prevQuat)
+        self.updateText(self.rot)
         pass
 
     
@@ -339,8 +342,8 @@ class Arcball(customtkinter.CTk):
         self.update_cube()
         self.fig.canvas.draw_idle()
 
-        self.updateText(self.rot)    
-
+        self.rot = self.quaternion_to_rotation_matrix(self.prevQuat)
+        self.updateText(self.rot)
         pass
 
     
@@ -372,7 +375,9 @@ class Arcball(customtkinter.CTk):
         self.fig.canvas.draw_idle()
         
         self.prevPoint = np.array([q1, q2, q3])
-
+        
+        self.rot = self.quaternion_to_rotation_matrix(self.prevQuat)
+        self.updateText(self.rot)
         pass
 
 
@@ -551,10 +556,6 @@ class Arcball(customtkinter.CTk):
                 entry.configure(state="disabled")
 
     def quaternion_to_rotation_matrix(self, q):
-        q0 = q[0]
-        q1 = q[1]
-        q2 = q[2]
-        q3 = q[3]
 
         w, x, y, z = q
         # Calcula los elementos de la matriz de rotación

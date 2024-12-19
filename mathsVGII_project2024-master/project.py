@@ -257,7 +257,7 @@ class Arcball(customtkinter.CTk):
         """
         Event triggered function on the event of a push on the button button_AA
         """
-        #Example on hot to get values from entries:
+           #Example on hot to get values from entries:
         angle = (float(self.entry_AA_angle.get()))
         angle=angle*np.pi/180 #Convert degrees to radians
         
@@ -269,42 +269,23 @@ class Arcball(customtkinter.CTk):
         if(magnitud == 0): return axis
         else: vectorN = axis/ magnitud #Normalize the axis vector
 
-        matriuR3 = np.array([[          0, -vectorN[2],     vectorN[1]],
-                            [ vectorN[2],           0,    -vectorN[0]],
-                            [-vectorN[1],  vectorN[0],              0]])
+        new_q=np.array([[np.cos(angle/2)],
+                        [np.sin(angle/2)*vectorN[0]],
+                        [np.sin(angle/2)*vectorN[1]],
+                        [np.sin(angle/2)*vectorN[2]]])
 
-        vectorN = vectorN.reshape(-1,1)
-
-        I = np.eye(3)
-        #Calculate the first part of the rotation matrix
-        matriuR1 = I * np.cos(angle)
-
-        #Calculate the second part of the rotation matrix
-        matriuR2 = (1-np.cos(angle))*(vectorN @ np.transpose(vectorN))
-
-        #Calculate the third part of the rotation matrix
-        matriuR3 = np.sin(angle)*matriuR3
-        # Combine all parts
-        R = matriuR1 + matriuR2 + matriuR3
-       
-        self.rot = R
-       
-        self.M = R.dot(self.M)
-        
+        self.prevQuat = self.quaternion_multiply(new_q, self.prevQuat)
+            
+        q = np.squeeze(self.prevQuat)
+        rotated = np.array([
+            self.quaternion_rotate_vector(q, self.M[:, i])
+            for i in range(self.M.shape[1])])
+        self.M = rotated.T
+      
+        self.rot=self.M
         self.update_cube()
        
         self.fig.canvas.draw_idle()
-
-        self.updateText(self.rot)
-        self.entry_AA_ax1.delete(0, "end")
-        self.entry_AA_ax1.insert(0, "1.0")  #Initial value for axis1
-        self.entry_AA_ax2.delete(0, "end")
-        self.entry_AA_ax2.insert(0, "0.0")  #Initial value for axis2
-        self.entry_AA_ax3.delete(0, "end")
-        self.entry_AA_ax3.insert(0, "0.0")  #Initial value for axis3
-        self.entry_AA_angle.delete(0, "end")
-        self.entry_AA_angle.insert(0, "0.0")  #Initial value for angle
-
         pass
 
 

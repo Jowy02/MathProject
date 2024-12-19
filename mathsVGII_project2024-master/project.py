@@ -25,6 +25,7 @@ class Arcball(customtkinter.CTk):
         self.prevQuat = np.array([[1],[0],[0],[0]])
         self.prevPoint = np.array([0,0,0])
         self.rot = np.array([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
+
         # configure window
         self.title("Holroyd's arcball")
         self.geometry(f"{1100}x{580}")
@@ -521,6 +522,17 @@ class Arcball(customtkinter.CTk):
         #Calculate rotation vector
         rotV=np.array([angle*axis[0],angle*axis[1],angle*axis[2] ])
 
+
+        self.entry_quat_0.delete(0, "end")
+        self.entry_quat_0.insert(0, str(self.prevQuat[0]))  #Initial value for q0
+        self.entry_quat_1.delete(0, "end")
+        self.entry_quat_1.insert(0, str(self.prevQuat[1]))  #Initial value for q1
+        self.entry_quat_2.delete(0, "end")
+        self.entry_quat_2.insert(0, str(self.prevQuat[2]))  #Initial value for q2
+        self.entry_quat_3.delete(0, "end")
+        self.entry_quat_3.insert(0, str(self.prevQuat[3]))  #Initial value for q3
+
+
         ##Update data apply_rotV        
         self.entry_AA_ax1.delete(0, "end")
         self.entry_AA_ax1.insert(0, str(axis[0]))  #Initial value for axis1
@@ -648,103 +660,101 @@ class Arcball(customtkinter.CTk):
             x_fig,y_fig= self.canvas_coordinates_to_figure_coordinates(event.x,event.y) #Extract viewport coordinates
            
             self.prevPoint = self.takePoint(x_fig,y_fig)
-            #self.prevPoint = self.prevPoint / np.linalg.norm(self.prevPoint)
-            print(self.prevPoint)
+            self.prevPoint /= np.linalg.norm(self.prevPoint)
 
           
-    def onmove(self,event):
+    def onmove(self, event):
         """
         Event triggered function on the event of a mouse motion
         """
+        # Example
+        if self.pressed:  # Only triggered if previous click
+            x_fig, y_fig = self.canvas_coordinates_to_figure_coordinates(event.x, event.y)  # Extract viewport coordinates
         
-        #Example
-        if self.pressed: #Only triggered if previous click
-            x_fig,y_fig= self.canvas_coordinates_to_figure_coordinates(event.x,event.y) #Extract viewport coordinates
-           
-            m1 = self.takePoint(x_fig,y_fig)
+            m1 = self.takePoint(x_fig, y_fig)
             m0 = self.prevPoint
-            print(m1)
 
-            #Normalize Vector
+            # Normalize Vectors
+            m1 /= np.linalg.norm(m1)
             norm_m1 = np.linalg.norm(m1)
-            #m1 = m1/norm_m1
             norm_m0 = np.linalg.norm(m0)
+     
+            # Dot product and cross product
+            dot_product = np.dot(m0, m1)
+            cross_product = np.cross(m0, m1)
 
-            # Dot product
-            dot_product = np.dot(m0.T,m1)
-            cross_product = np.cross(m0,m1)
-            deltaquat = np.array([norm_m0 * norm_m1 + dot_product, cross_product[0],cross_product[1],cross_product[2]])
-    
-            # Calcula la norma (magnitud) del cuaternión
-            magnitud = np.linalg.norm(deltaquat)
-            
-            if magnitud != 0:
-               deltaquat = deltaquat / magnitud
-               
+            # Calculate the delta quaternion
+            deltaquat = np.array([(norm_m0 * norm_m1) + dot_product,*cross_product])
+
+            # Normalize the delta quaternion
+            magnitude = np.linalg.norm(deltaquat)
+            if magnitude != 0:
+                deltaquat /= magnitude
+
+            # Multiply the current quaternion by the delta quaternion
             self.prevQuat = self.quaternion_multiply(deltaquat, self.prevQuat)
             
+            magnitude = np.linalg.norm(self.prevQuat)
+            if magnitude != 0:
+                self.prevQuat /= magnitude
+
+            # Rotate the matrix based on the quaternion
             q = np.squeeze(self.prevQuat)
             rotated = np.array([
                 self.quaternion_rotate_vector(q, self.M[:, i])
-                for i in range(self.M.shape[1])])
+                for i in range(self.M.shape[1])
+            ])
+            
             self.M = rotated.T
-            self.update_cube() #Update the cube
+            self.update_cube()  # Update the cube
             self.prevPoint = m1
 
-
-    def onrelease(self,event):
+    def onrelease(self, event):
         """
         Event triggered function on the event of a mouse release
         """
         self.rot = self.quaternion_to_rotation_matrix(self.prevQuat)
         self.updateText(self.rot)
         self.prueba = False
-        self.pressed = False # Bool to control(deactivate) a drag (click+move)
-    
+        self.pressed = False  # Bool to control(deactivate) a drag (click+move)
+
     def quaternion_rotate_vector(self, q, v):
-        """Rota un vector v usando el cuaternión q."""
+        """Rotate a vector v using the quaternion q."""
         w, x, y, z = q
         q_vector = np.array([0, *v])
         q_conjugate = np.array([w, -x, -y, -z])
 
-        result = self.quaternion_multiply( self.quaternion_multiply(q, q_vector), q_conjugate)
-        return result[1:]  # Devuelve solo la parte vectorial
+        result = self.quaternion_multiply(self.quaternion_multiply(q, q_vector), q_conjugate)
+        return result[1:]  # Return only the vector part
 
-    def takePoint(self,x_fig,y_fig):
-        
-        r=np.sqrt(3)
-        
-        distance = x_fig**2 + y_fig**2
+    def takePoint(self, x_fig, y_fig):
+        """Generate a 3D vector"""
+        r = np.sqrt(3)
+        distance = (x_fig ** 2) + (y_fig ** 2)
 
-        if(distance < (r**2)/2):
-            
-            z_fig = np.sqrt ((r**2) - x_fig**2 - y_fig**2)
-            m = np.array([x_fig, y_fig,z_fig]).T
-            
-        else:
-            z_fig = (r**2) / (2 * np.sqrt(distance)) 
-            m = np.array([x_fig, y_fig,z_fig]).T
+        if distance < (r ** 2) / 2:
+            z_fig = np.sqrt((r ** 2) - (x_fig ** 2) - (y_fig ** 2))
+            m = np.array([x_fig, y_fig, z_fig])
+
+        elif distance >= (r ** 2) / 2:
+            z_fig = (r ** 2) / (2 * np.sqrt(distance))
+            m = np.array([x_fig, y_fig, z_fig])
             div = np.linalg.norm(m)
-            m = (r*m)/div
-           
-       
-        return m
-     
-    def updateText(self, R):
-        entries = [
-            [self.entry_RotM_11, self.entry_RotM_12, self.entry_RotM_13],
-            [self.entry_RotM_21, self.entry_RotM_22, self.entry_RotM_23],
-            [self.entry_RotM_31, self.entry_RotM_32, self.entry_RotM_33],
-        ]
+            m = (r * m) / div
 
-        # Iterar sobre filas y columnas
-        for i in range(3):
-            for j in range(3):
-                entry = entries[i][j]
-                entry.configure(state="normal")
-                entry.delete(0, "end")
-                entry.insert(0, R[i, j])
-                entry.configure(state="disabled")
+        return m
+
+    def quaternion_multiply(self, q, p):
+        """Multiply two quaternions q1 and q2."""
+        p = np.squeeze(p)
+        
+        q0, qv = q[0], q[1:]
+        p0, pv = p[0], p[1:]
+        qp = np.zeros(4)
+        qp[0] = q0 * p0 - np.dot(qv, pv)
+        qp[1:] = q0 * pv + p0 * qv + np.cross(qv, pv)
+
+        return qp
 
     def quaternion_to_rotation_matrix(self, q):
 
@@ -761,16 +771,21 @@ class Arcball(customtkinter.CTk):
 
         return R
 
-    def quaternion_multiply(self, q1, q2):
-        """Multiplica dos cuaterniones q1 y q2."""
-        w1, x1, y1, z1 = q1
-        w2, x2, y2, z2 = q2
-        w = w1 * w2 - x1 * x2 - y1 * y2 - z1 * z2
-        x = w1 * x2 + x1 * w2 + y1 * z2 - z1 * y2
-        y = w1 * y2 - x1 * z2 + y1 * w2 + z1 * x2
-        z = w1 * z2 + x1 * y2 - y1 * x2 + z1 * w2
-        return np.array([w, x, y, z])
+    def updateText(self, R):
+        entries = [
+            [self.entry_RotM_11, self.entry_RotM_12, self.entry_RotM_13],
+            [self.entry_RotM_21, self.entry_RotM_22, self.entry_RotM_23],
+            [self.entry_RotM_31, self.entry_RotM_32, self.entry_RotM_33],
+        ]
 
+        # Iterar sobre filas y columnas
+        for i in range(3):
+            for j in range(3):
+                entry = entries[i][j]
+                entry.configure(state="normal")
+                entry.delete(0, "end")
+                entry.insert(0, R[i, j])
+                entry.configure(state="disabled")
 
     def init_cube(self):
         """

@@ -268,14 +268,16 @@ class Arcball(customtkinter.CTk):
         magnitud = np.linalg.norm(axis)
         if(magnitud == 0): return axis
         else: vectorN = axis/ magnitud #Normalize the axis vector
-
+       
+        #Quaternion formula:
         new_q=np.array([[np.cos(angle/2)],
                         [np.sin(angle/2)*vectorN[0]],
                         [np.sin(angle/2)*vectorN[1]],
                         [np.sin(angle/2)*vectorN[2]]])
 
         self.prevQuat = self.quaternion_multiply(new_q, self.prevQuat)
-            
+        
+        #Rotate each column vector of the vertices 
         q = np.squeeze(self.prevQuat)
         rotated = np.array([
             self.quaternion_rotate_vector(q, self.M[:, i])
@@ -294,56 +296,39 @@ class Arcball(customtkinter.CTk):
         """
         Event triggered function on the event of a push on the button button_rotV 
         """
-        new_axis=np.array([float(self.entry_rotV_1.get()),float(self.entry_rotV_2.get()), float(self.entry_rotV_3.get())])
+        #Rotation vector
+        r=np.array([float(self.entry_rotV_1.get()),float(self.entry_rotV_2.get()), float(self.entry_rotV_3.get())])
 
+        #Normalize vector
+        vector = r/np.linalg.norm(r)
+        angle=np.linalg.norm(r)
+
+        #Calculate the magnitude (norm) of the rotation axis vector
+        magnitud = np.linalg.norm(vector)
+        if(magnitud == 0): return vector
+        else: vectorN = vector/ magnitud #Normalize the axis vector
+        
+        #Quaternion formula:
+        new_q=np.array([[np.cos(angle/2)],
+                        [np.sin(angle/2)*vectorN[0]],
+                        [np.sin(angle/2)*vectorN[1]],
+                        [np.sin(angle/2)*vectorN[2]]])
+        
+        #Combine the new quaternion with the previous quaternion
+        self.prevQuat = self.quaternion_multiply(new_q, self.prevQuat)
+
+        #Rotate each column vector of the vertices 
+        q = np.squeeze(self.prevQuat)
+        rotated = np.array([
+            self.quaternion_rotate_vector(q, self.M[:, i])
+            for i in range(self.M.shape[1])])
+        self.M = rotated.T
+      
+        self.rot=self.M
+        self.update_cube()
        
-        if np.all(self.prevPoint == 0):
-            print("Warning: self.prevPoint is zero, initializing to [1, 0, 0]")
-            self.prevPoint = np.array([1, 0, 0])
-        m0=self.prevPoint
-        #Normalize Vector
-        norm_new_axis = np.linalg.norm(new_axis)
-        norm_m0 = np.linalg.norm(m0)
-
-        # Dot product
-        dot_product = np.dot(new_axis, np.transpose(m0))
-        dot_product = np.clip(dot_product / (norm_new_axis * norm_m0), -1.0, 1.0) #Evitar errores numéricos
-              
-        #Caclulate angle
-        angle = np.arccos(dot_product)/10
-        
-        print(angle)
-        # Calculate the quaternion for the rotation
-        new_q = self.QuatRotation1(angle, new_axis, m0)
-        
-        if (self.prueba == True):
-            self.prevQuat = self.Quatmult(new_q, self.prevQuat) #Quaternion multiplication
-        
-        else:
-            self.prevQuat = new_q
-            self.prueba = True
-        
-        # Convert quaternion to rotation matrix
-        R = np.array([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
-
-        R = self.quaternion_to_rotation_matrix(self.prevQuat)
-        self.rot = R
-
-        self.M = R.dot(self.M) #Modify the vertices matrix with a rotation matrix M
-
-        self.update_cube() #Update the cube
-        
         self.fig.canvas.draw_idle()
-
-        self.prevPoint = new_axis
-
-        self.updateText(self.rot)
-        self.entry_rotV_1.delete(0, "end")
-        self.entry_rotV_1.insert(0, "0.0")  #Initial value for rotV1
-        self.entry_rotV_2.delete(0, "end")
-        self.entry_rotV_2.insert(0, "0.0")  #Initial value for rotV2
-        self.entry_rotV_3.delete(0, "end")
-        self.entry_rotV_3.insert(0, "0.0")  #Initial value for rotV3
+        
         pass
 
     

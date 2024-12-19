@@ -489,8 +489,8 @@ class Arcball(customtkinter.CTk):
             x_fig,y_fig= self.canvas_coordinates_to_figure_coordinates(event.x,event.y) #Extract viewport coordinates
            
             self.prevPoint = self.takePoint(x_fig,y_fig)
-            self.prevPoint = self.prevPoint / np.linalg.norm(self.prevPoint)
-            #print(self.prevPoint)
+            #self.prevPoint = self.prevPoint / np.linalg.norm(self.prevPoint)
+            print(self.prevPoint)
 
           
     def onmove(self,event):
@@ -504,16 +504,16 @@ class Arcball(customtkinter.CTk):
            
             m1 = self.takePoint(x_fig,y_fig)
             m0 = self.prevPoint
-            #print(m1)
+            print(m1)
 
             #Normalize Vector
             norm_m1 = np.linalg.norm(m1)
-            m1 = m1/norm_m1
+            #m1 = m1/norm_m1
             norm_m0 = np.linalg.norm(m0)
 
             # Dot product
             dot_product = np.dot(m0.T,m1)
-            cross_product = np.cross(m0,m1).T
+            cross_product = np.cross(m0,m1)
             deltaquat = np.array([norm_m0 * norm_m1 + dot_product, cross_product[0],cross_product[1],cross_product[2]])
     
             # Calcula la norma (magnitud) del cuaternión
@@ -529,10 +529,19 @@ class Arcball(customtkinter.CTk):
                 self.quaternion_rotate_vector(q, self.M[:, i])
                 for i in range(self.M.shape[1])])
             self.M = rotated.T
-
             self.update_cube() #Update the cube
             self.prevPoint = m1
 
+
+    def onrelease(self,event):
+        """
+        Event triggered function on the event of a mouse release
+        """
+        self.rot = self.quaternion_to_rotation_matrix(self.prevQuat)
+        self.updateText(self.rot)
+        self.prueba = False
+        self.pressed = False # Bool to control(deactivate) a drag (click+move)
+    
     def quaternion_rotate_vector(self, q, v):
         """Rota un vector v usando el cuaternión q."""
         w, x, y, z = q
@@ -550,71 +559,33 @@ class Arcball(customtkinter.CTk):
 
         if(distance < (r**2)/2):
             
-            z_fig = np.sqrt (r**2 - x_fig**2 - y_fig**2)
+            z_fig = np.sqrt ((r**2) - x_fig**2 - y_fig**2)
             m = np.array([x_fig, y_fig,z_fig]).T
             
         else:
-            z_fig = r**2 / (2 * np.sqrt(distance)) 
+            z_fig = (r**2) / (2 * np.sqrt(distance)) 
             m = np.array([x_fig, y_fig,z_fig]).T
             div = np.linalg.norm(m)
             m = (r*m)/div
            
        
         return m
-
-    def onrelease(self,event):
-        """
-        Event triggered function on the event of a mouse release
-        """
-        self.updateText(self.rot)
-        self.prueba = False
-        self.pressed = False # Bool to control(deactivate) a drag (click+move)
-
+     
     def updateText(self, R):
-        self.entry_RotM_11= customtkinter.CTkEntry(self.RotMFrame, width=50, border_width=0)
-        self.entry_RotM_11.insert(0,R[0,0])
-        self.entry_RotM_11.configure(state="disabled")
-        self.entry_RotM_11.grid(row=0, column=1, padx=(2,0), pady=(20,0), sticky="ew")
+        entries = [
+            [self.entry_RotM_11, self.entry_RotM_12, self.entry_RotM_13],
+            [self.entry_RotM_21, self.entry_RotM_22, self.entry_RotM_23],
+            [self.entry_RotM_31, self.entry_RotM_32, self.entry_RotM_33],
+        ]
 
-        self.entry_RotM_12= customtkinter.CTkEntry(self.RotMFrame, width=50, border_width=0)
-        self.entry_RotM_12.insert(0,R[0,1])
-        self.entry_RotM_12.configure(state="disabled")
-        self.entry_RotM_12.grid(row=0, column=2, padx=(2,0), pady=(20,0), sticky="ew")
-
-        self.entry_RotM_13= customtkinter.CTkEntry(self.RotMFrame, width=50, border_width=0)
-        self.entry_RotM_13.insert(0,R[0,2])
-        self.entry_RotM_13.configure(state="disabled")
-        self.entry_RotM_13.grid(row=0, column=3, padx=(2,0), pady=(20,0), sticky="ew")
-
-        self.entry_RotM_21= customtkinter.CTkEntry(self.RotMFrame, width=50, border_width=0)
-        self.entry_RotM_21.insert(0,R[1,0])
-        self.entry_RotM_21.configure(state="disabled")
-        self.entry_RotM_21.grid(row=1, column=1, padx=(2,0), pady=(2,0), sticky="ew")
-
-        self.entry_RotM_22= customtkinter.CTkEntry(self.RotMFrame, width=50, border_width=0)
-        self.entry_RotM_22.insert(0,R[1,1])
-        self.entry_RotM_22.configure(state="disabled")
-        self.entry_RotM_22.grid(row=1, column=2, padx=(2,0), pady=(2,0), sticky="ew")
-
-        self.entry_RotM_23= customtkinter.CTkEntry(self.RotMFrame, width=50, border_width=0)
-        self.entry_RotM_23.insert(0,R[1,2])
-        self.entry_RotM_23.configure(state="disabled")
-        self.entry_RotM_23.grid(row=1, column=3, padx=(2,0), pady=(2,0), sticky="ew")
-
-        self.entry_RotM_31= customtkinter.CTkEntry(self.RotMFrame, width=50, border_width=0)
-        self.entry_RotM_31.insert(0,R[2,0])
-        self.entry_RotM_31.configure(state="disabled")
-        self.entry_RotM_31.grid(row=2, column=1, padx=(2,0), pady=(2,0), sticky="ew")
-
-        self.entry_RotM_32= customtkinter.CTkEntry(self.RotMFrame, width=50, border_width=0)
-        self.entry_RotM_32.insert(0,R[2,1])
-        self.entry_RotM_32.configure(state="disabled")
-        self.entry_RotM_32.grid(row=2, column=2, padx=(2,0), pady=(2,0), sticky="ew")
-
-        self.entry_RotM_33= customtkinter.CTkEntry(self.RotMFrame, width=50, border_width=0)
-        self.entry_RotM_33.insert(0,R[2,2])
-        self.entry_RotM_33.configure(state="disabled")
-        self.entry_RotM_33.grid(row=2, column=3, padx=(2,0), pady=(2,0), sticky="ew")
+        # Iterar sobre filas y columnas
+        for i in range(3):
+            for j in range(3):
+                entry = entries[i][j]
+                entry.configure(state="normal")
+                entry.delete(0, "end")
+                entry.insert(0, R[i, j])
+                entry.configure(state="disabled")
 
     def quaternion_to_rotation_matrix(self, q):
         q0 = q[0]

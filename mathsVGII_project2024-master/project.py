@@ -731,6 +731,7 @@ class Arcball(customtkinter.CTk):
         """Generate a 3D vector"""
         r = np.sqrt(3)
         distance = (x_fig ** 2) + (y_fig ** 2)
+        x_fig, y_fig= y_fig, x_fig
 
         if distance < (r ** 2) / 2:
             z_fig = np.sqrt((r ** 2) - (x_fig ** 2) - (y_fig ** 2))

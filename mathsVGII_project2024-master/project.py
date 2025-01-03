@@ -684,19 +684,10 @@ class Arcball(customtkinter.CTk):
             cross_product = np.cross(m0, m1)
 
             # Calculate the delta quaternion
-            deltaquat = np.array([(norm_m0 * norm_m1) + dot_product,*cross_product])
+            self.prevQuat = np.array([(norm_m0 * norm_m1) + dot_product,*cross_product])
 
             # Normalize the delta quaternion
-            magnitude = np.linalg.norm(deltaquat)
-            if magnitude != 0:
-                deltaquat /= magnitude
-
-            # Multiply the current quaternion by the delta quaternion
-            self.prevQuat = self.quaternion_multiply(deltaquat, self.prevQuat)
-            
-            magnitude = np.linalg.norm(self.prevQuat)
-            if magnitude != 0:
-                self.prevQuat /= magnitude
+            self.prevQuat /= np.linalg.norm(self.prevQuat)
 
             # Rotate the matrix based on the quaternion
             q = np.squeeze(self.prevQuat)
@@ -731,7 +722,6 @@ class Arcball(customtkinter.CTk):
         """Generate a 3D vector"""
         r = np.sqrt(3)
         distance = (x_fig ** 2) + (y_fig ** 2)
-        x_fig, y_fig= y_fig, x_fig
 
         if distance < (r ** 2) / 2:
             z_fig = np.sqrt((r ** 2) - (x_fig ** 2) - (y_fig ** 2))
@@ -792,7 +782,6 @@ class Arcball(customtkinter.CTk):
         """
         Initialization function that sets up cube's geometry and plot information
         """
-
         self.M = np.array(
             [[ -1,  -1, 1],   #Node 0
             [ -1,   1, 1],    #Node 1
@@ -835,8 +824,8 @@ class Arcball(customtkinter.CTk):
 
         #Configuring the plot aspect
         ax.azim=-90
-        ax.roll = -90
-        ax.elev=0   
+        ax.roll = 0
+        ax.elev= 90   
         ax.set_xlim3d(-2, 2)
         ax.set_ylim3d(-2, 2)
         ax.set_zlim3d(-2, 2)
@@ -846,21 +835,17 @@ class Arcball(customtkinter.CTk):
 
         self.pix2unit = 1.0/60 #ratio for drawing the cube 
 
-
     def update_cube(self):
         """
         Updates the cube vertices and updates the figure.
         Call this function after modifying the vertex matrix in self.M to redraw the cube
         """
-
         faces = []
-
         for row in self.con:
             faces.append([self.M[:,row[0]],self.M[:,row[1]],self.M[:,row[2]], self.M[:,row[3]]])
 
         self.facesObj.set_verts(faces)
         self.bm.update()
-
 
     def canvas_coordinates_to_figure_coordinates(self,x_can,y_can):
         """
@@ -874,7 +859,6 @@ class Arcball(customtkinter.CTk):
         y_fig = (y_can-figure_center_y)*self.pix2unit
 
         return(x_fig,y_fig)
-
 
     def destroy(self):
         """

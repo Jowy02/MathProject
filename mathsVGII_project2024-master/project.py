@@ -228,7 +228,9 @@ class Arcball(customtkinter.CTk):
         self.entry_RotM_33.configure(state="disabled")
         self.entry_RotM_33.grid(row=2, column=3, padx=(2,0), pady=(2,0), sticky="ew")
     
+
     def update_entries(self, quaternion, axis, angle, rotV, roll, pitch, yaw):
+        # Update screen
         # Quaternion
         self.entry_quat_0.delete(0, "end")
         self.entry_quat_0.insert(0, str(quaternion[0]))
@@ -271,23 +273,23 @@ class Arcball(customtkinter.CTk):
         """
         
         self.M = np.array(
-            [[ -1,  -1, 1],   #Node 0
-            [ -1,   1, 1],    #Node 1
-            [1,   1, 1],      #Node 2
-            [1,  -1, 1],      #Node 3
-            [-1,  -1, -1],    #Node 4
-            [-1,  1, -1],     #Node 5
-            [1,   1, -1],     #Node 6
-            [1,  -1, -1]], dtype=float).transpose() #Node 7
+            [[ -1,  -1, 1],   # Node 0
+            [ -1,   1, 1],    # Node 1
+            [1,   1, 1],      # Node 2
+            [1,  -1, 1],      # Node 3
+            [-1,  -1, -1],    # Node 4
+            [-1,  1, -1],     # Node 5
+            [1,   1, -1],     # Node 6
+            [1,  -1, -1]], dtype=float).transpose() # Node 7
 
-        self.update_cube() #Update the cube
+        self.update_cube() # Update the cube
 
-        R = np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]) #Update rotation. Initial rotation
+        R = np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]) # Update rotation. Initial rotation
         self.rot = R
         self.prevQuat = np.array([[1],[0],[0],[0]])
         self.updateText(self.rot,False)
 
-
+        # Update information screen
         quat = np.array([1.0,0.0,0.0,0.0])
         axis = np.array([1.0,0.0,0.0])
         angle=0.0
@@ -306,20 +308,20 @@ class Arcball(customtkinter.CTk):
         """
         Event triggered function on the event of a push on the button button_AA
         """
-        #Example on hot to get values from entries:
+        # Example on hot to get values from entries:
         angle = (float(self.entry_AA_angle.get()))
-        angle= angle * np.pi / 180
+        angle = angle * np.pi / 180
         
-        #Get the values of the components of the rotation axis
+        # Get the values of the components of the rotation axis
         axis=np.array([float(self.entry_AA_ax1.get()),float(self.entry_AA_ax2.get()), float(self.entry_AA_ax3.get())])
         
-        #Normalize axis
+        # Normalize axis
         axis_normalize = axis/np.linalg.norm(axis)
 
         # Convertir a matriz de rotación y quaternion
         self.M, new_quaternion=self.axisAngle_to_quaternion(axis_normalize,angle)
     
-        #Update Rotation
+        # Update Rotation
         self.rot=self.M
         self.update_cube()
        
@@ -327,11 +329,11 @@ class Arcball(customtkinter.CTk):
         self.rot = self.quaternion_to_rotation_matrix(self.prevQuat)
         self.updateText(self.rot,False)
 
-        # Calcular valores actualizados
-        #Calculate rotation vector
+        # Calculate updated values
+        # Calculate rotation vector
         rotV = angle*axis_normalize
        
-        #Calculate Euler angles
+        # Calculate Euler angles
         yaw,pitch,roll=self.rotation_matrix_to_euler_angles( self.rot )
 
         self.update_entries(new_quaternion, axis, angle, rotV, roll, pitch, yaw)
@@ -344,16 +346,16 @@ class Arcball(customtkinter.CTk):
         """
         Event triggered function on the event of a push on the button button_rotV 
         """
-        #Rotation vector
+        # Rotation vector
         r=np.array([float(self.entry_rotV_1.get()),float(self.entry_rotV_2.get()), float(self.entry_rotV_3.get())])
 
-        #Normalize vector
+        # Normalize vector
         vector = r/np.linalg.norm(r)
         angle=np.linalg.norm(vector)
 
         self.M,new_quaternion=self.axisAngle_to_quaternion(vector,angle)
      
-        #Update Rotation
+        # Update Rotation
         self.rot=self.M
         self.update_cube()
        
@@ -361,7 +363,8 @@ class Arcball(customtkinter.CTk):
         self.rot = self.quaternion_to_rotation_matrix(self.prevQuat)
         self.updateText(self.rot,False)
 
-        #Calculate Euler angles
+        # Calculate updated values
+        # Calculate Euler angles
         yaw,pitch,roll=self.rotation_matrix_to_euler_angles( self.rot )
 
         self.update_entries(new_quaternion, vector, angle, r, roll, pitch, yaw)
@@ -374,49 +377,49 @@ class Arcball(customtkinter.CTk):
         """
         Event triggered function on the event of a push on the button button_EA
         """
-        #Get the values
+        # Get the values
         roll= float(self.entry_EA_roll.get())
         pitch=float(self.entry_EA_pitch.get())
         yaw= float(self.entry_EA_yaw.get())
 
-        #Convert angle from degrees
+        # Convert angle from degrees
         roll=roll*np.pi/180
         pitch=pitch*np.pi/180
         yaw=yaw*np.pi/180
 
-        #Define the rotation matrix for yaw 
+        # Define the rotation matrix for yaw 
         Rz=np.array([
             [np.cos(yaw), -np.sin(yaw), 0],
             [np.sin(yaw), np.cos(yaw), 0],
             [0, 0, 1]])
       
-        #Define the rotation matrix for pitch 
+        # Define the rotation matrix for pitch 
         Ry=np.array([
             [np.cos(pitch), 0, np.sin(pitch)],
             [0, 1, 0],
             [-np.sin(pitch), 0, np.cos(pitch)]])
         
-        #Define the rotation matrix for roll 
+        # Define the rotation matrix for roll 
         Rx=np.array([
             [1, 0, 0],
             [0, np.cos(roll), -np.sin(roll)],
             [0, np.sin(roll), np.cos(roll)]])
         
-        #Rotation matrix
+        # Rotation matrix
         R=Rz.dot(Ry).dot(Rx)
         
         # Convert the rotation matrix to a quaternion   
         axis,angle=self.rotationMatrix_to_axisAngle(R)
         self.M,new_quaternion=self.axisAngle_to_quaternion(axis,angle)
       
-        #Update Rotation
+        # Update Rotation
         self.update_cube()
         self.fig.canvas.draw_idle()
 
         self.rot = self.quaternion_to_rotation_matrix(self.prevQuat)
         self.updateText(self.rot,False)
 
-        #Calculate rotation vector
+        # Calculate rotation vector
         rotV=np.array([angle*axis[0],angle*axis[1],angle*axis[2] ])
         
         self.update_entries(new_quaternion, axis, angle, rotV, roll, pitch, yaw)
@@ -428,27 +431,27 @@ class Arcball(customtkinter.CTk):
         """
         Event triggered function on the event of a push on the button button_quat
         """
-        #Get the quaternion values
+        # Get the quaternion values
         q0 = float(self.entry_quat_0.get())
         q1 = float(self.entry_quat_1.get())
         q2 = float(self.entry_quat_2.get())
         q3 = float(self.entry_quat_3.get())
 
-        #The quaternion entered by the user
+        # The quaternion entered by the user
         enter_quat = np.array([q0, q1, q2, q3])
         user_quat=enter_quat/np.linalg.norm(enter_quat)
       
-        #Combine the new quaternion with the previous quaternion
+        # Combine the new quaternion with the previous quaternion
         self.prevQuat =  user_quat
 
-        #Rotate each column vector of the vertices 
+        # Rotate each column vector of the vertices 
         q = np.squeeze(self.prevQuat)
         rotated = np.array([
             self.quaternion_rotate_vector(q, self.M[:, i])
             for i in range(self.M.shape[1])])
         self.M=rotated.T
 
-        self.update_cube() #Update the cube
+        self.update_cube() # Update the cube
         self.fig.canvas.draw_idle()
         
         self.prevPoint = np.array([q1, q2, q3])
@@ -456,13 +459,13 @@ class Arcball(customtkinter.CTk):
         self.rot = self.quaternion_to_rotation_matrix(self.prevQuat)
         self.updateText(self.rot,False)
         
-        #Pass through the matrix rotation, obtain the angle and the vector.
+        # Pass through the matrix rotation, obtain the angle and the vector.
         axis,angle=self.rotationMatrix_to_axisAngle(self.rot)
 
-        #Calculate Euler angles
+        # Calculate Euler angles
         yaw,pitch,roll=self.rotation_matrix_to_euler_angles( self.rot )
 
-        #Calculate rotation vector
+        # Calculate rotation vector
         rotV=np.array([angle*axis[0],angle*axis[1],angle*axis[2] ])
 
         self.update_entries(enter_quat, axis, angle, rotV, roll, pitch, yaw)
@@ -477,12 +480,12 @@ class Arcball(customtkinter.CTk):
         axis = np.zeros(3)
 
         if angle == 0:
-            #Handle special case when sin(theta) is 0 (e.g., identity matrix)
+            # Handle special case when sin(theta) is 0 (e.g., identity matrix)
             axis = np.array([1, 0, 0]) #Eje arbitrario
             return axis, 0
 
         if np.isclose(angle, np.pi):
-        #Determine what is the maximum element on the diagonal
+        # Determine what is the maximum element on the diagonal
             max_index = R[0, 0]
             if max_index < R[1, 1] :
                 max_index = R[1, 1]
@@ -490,19 +493,19 @@ class Arcball(customtkinter.CTk):
             if max_index < R[2, 2] :
                 max_index = R[2, 2]
 
-            #Depending on which element is the largest, calculate the components of the axis of rotation
-            if max_index == R[0, 0] : #Element [0, 0] is the largest
-                axis[0] = np.sqrt((R[0, 0] + 1) / 2) #Positive principal component
+            # Depending on which element is the largest, calculate the components of the axis of rotation
+            if max_index == R[0, 0] : # Element [0, 0] is the largest
+                axis[0] = np.sqrt((R[0, 0] + 1) / 2) # Positive principal component
                 axis[1] = R[0, 1] / (2 * axis[0])
                 axis[2] = R[0, 2] / (2 * axis[0])
 
-            if max_index == R[1, 1] :  #Element [1, 1] is the largest
-                axis[1] = np.sqrt((R[1, 1] + 1) / 2) #Positive principal component
+            if max_index == R[1, 1] :  # Element [1, 1] is the largest
+                axis[1] = np.sqrt((R[1, 1] + 1) / 2) # Positive principal component
                 axis[0] = R[1, 0] / (2 * axis[1])
                 axis[2] = R[1, 2] / (2 * axis[1])
 
-            if max_index == R[2, 2] :   #Element [2, 2] is the largest
-                axis[2] = np.sqrt((R[2, 2] + 1) / 2) #Positive principal component
+            if max_index == R[2, 2] :   # Element [2, 2] is the largest
+                axis[2] = np.sqrt((R[2, 2] + 1) / 2) # Positive principal component
                 axis[0] = R[2, 0] / (2 * axis[2])
                 axis[1] = R[2, 1] / (2 * axis[2])
             return axis, angle
@@ -515,18 +518,18 @@ class Arcball(customtkinter.CTk):
         return axis, angle
     
     def axisAngle_to_quaternion(self,axis,angle):
-        #Calculate the magnitude (norm) of the rotation axis vector
+        # Calculate the magnitude (norm) of the rotation axis vector
         axis = axis / np.linalg.norm(axis)
 
-        #Quaternion formula:
+        # Quaternion formula:
         new_q=np.array([[np.cos(angle/2)],
                         [np.sin(angle/2)*axis[0]],
                         [np.sin(angle/2)*axis[1]],
                         [np.sin(angle/2)*axis[2]]])
         
-        #Combine the new quaternion with the previous quaternion
+        # Combine the new quaternion with the previous quaternion
         self.prevQuat = new_q
-        #Rotate each column vector of the vertices 
+        # Rotate each column vector of the vertices 
         q = np.squeeze(self.prevQuat)
         rotated = np.array([
             self.quaternion_rotate_vector(q, self.M[:, i])
@@ -535,22 +538,22 @@ class Arcball(customtkinter.CTk):
 
     def rotation_matrix_to_euler_angles(self,R):
         if R[2, 0]!=1 and R[2, 0]!=-1:
-            pitch = np.arcsin(-R[2, 0]) #theta
+            pitch = np.arcsin(-R[2, 0]) # theta
             cos=1/np.cos(pitch)
-            roll=np.arctan2(R[2,1]*cos,R[2,2]*cos) #phi
-            yaw=np.arctan2(R[1,0]*cos,R[0,0]*cos) #psi
+            roll=np.arctan2(R[2,1]*cos,R[2,2]*cos) # phi
+            yaw=np.arctan2(R[1,0]*cos,R[0,0]*cos) # psi
 
         if R[2, 0]==1:
-            pitch=-(np.pi/2) #-90 degrees #theta
-            roll=np.arctan2(-R[0,1],-R[0,2]) #phi
-            yaw=0 #0 degrees #psi
+            pitch=-(np.pi/2) # -90 degrees # theta
+            roll=np.arctan2(-R[0,1],-R[0,2]) # phi
+            yaw=0 # 0 degrees #psi
 
         if R[2, 0]==-1:
-            pitch=np.pi/2 #90 degrees #theta
-            roll=np.arctan2(R[0,1],R[0,2]) #phi
-            yaw=0 #0 degrees #psi
+            pitch=np.pi/2 # 90 degrees #theta
+            roll=np.arctan2(R[0,1],R[0,2]) # phi
+            yaw=0 # 0 degrees #psi
         
-        #Cambiar a degrees
+        # Change to degrees
         yaw=yaw*180/np.pi
         pitch=pitch*180/np.pi
         roll=roll*180/np.pi
@@ -562,7 +565,7 @@ class Arcball(customtkinter.CTk):
         """
         if event.button:
             self.pressed = True # Bool to control(activate) a drag (click+move)
-            x_fig,y_fig= self.canvas_coordinates_to_figure_coordinates(event.x,event.y) #Extract viewport coordinates
+            x_fig,y_fig= self.canvas_coordinates_to_figure_coordinates(event.x,event.y) # Extract viewport coordinates
            
             self.prevPoint = self.takePoint(x_fig,y_fig)
             self.prevPoint /= np.linalg.norm(self.prevPoint)
@@ -688,71 +691,71 @@ class Arcball(customtkinter.CTk):
         if (full):
             self.rot = self.quaternion_to_rotation_matrix(self.prevQuat)
             
-            #Pass through the matrix rotation, obtain the angle and the vector.
+            # Pass through the matrix rotation, obtain the angle and the vector.
             axis,angle=self.rotationMatrix_to_axisAngle(self.rot)
 
-            #Calculate Euler angles
+            # Calculate Euler angles
             yaw,pitch,roll=self.rotation_matrix_to_euler_angles( self.rot )
 
-            #Calculate rotation vector
+            # Calculate rotation vector
             rotV=np.array([angle*axis[0],angle*axis[1],angle*axis[2] ])
 
-            self.entry_quat_0.insert(0, str(self.prevQuat[0]))  #Initial value for q0
+            self.entry_quat_0.insert(0, str(self.prevQuat[0]))  # Initial value for q0
             self.entry_quat_1.delete(0, "end")
-            self.entry_quat_1.insert(0, str(self.prevQuat[1]))  #Initial value for q1
+            self.entry_quat_1.insert(0, str(self.prevQuat[1]))  # Initial value for q1
             self.entry_quat_2.delete(0, "end")
-            self.entry_quat_2.insert(0, str(self.prevQuat[2]))  #Initial value for q2
+            self.entry_quat_2.insert(0, str(self.prevQuat[2]))  # Initial value for q2
             self.entry_quat_3.delete(0, "end")
-            self.entry_quat_3.insert(0, str(self.prevQuat[3]))  #Initial value for q3
+            self.entry_quat_3.insert(0, str(self.prevQuat[3]))  # Initial value for q3
 
 
             ##Update data apply_rotV        
             self.entry_AA_ax1.delete(0, "end")
-            self.entry_AA_ax1.insert(0, str(axis[0]))  #Initial value for axis1
+            self.entry_AA_ax1.insert(0, str(axis[0]))  # Initial value for axis1
             self.entry_AA_ax2.delete(0, "end")
-            self.entry_AA_ax2.insert(0, str(axis[1]))  #Initial value for axis2
+            self.entry_AA_ax2.insert(0, str(axis[1]))  # Initial value for axis2
             self.entry_AA_ax3.delete(0, "end")
-            self.entry_AA_ax3.insert(0, str(axis[2]))  #Initial value for axis3
+            self.entry_AA_ax3.insert(0, str(axis[2]))  # Initial value for axis3
             self.entry_AA_angle.delete(0, "end")
-            self.entry_AA_angle.insert(0, str(angle))  #Initial value for angle
+            self.entry_AA_angle.insert(0, str(angle))  # Initial value for angle
 
             ##Update data apply_rotV        
             self.entry_rotV_1.delete(0, "end")
-            self.entry_rotV_1.insert(0, str(rotV[0]))  #Initial value for rotV1
+            self.entry_rotV_1.insert(0, str(rotV[0]))  # Initial value for rotV1
             self.entry_rotV_2.delete(0, "end")
-            self.entry_rotV_2.insert(0, str(rotV[1]))  #Initial value for rotV2
+            self.entry_rotV_2.insert(0, str(rotV[1]))  # Initial value for rotV2
             self.entry_rotV_3.delete(0, "end")
-            self.entry_rotV_3.insert(0, str(rotV[2]))  #Initial value for rotV3
+            self.entry_rotV_3.insert(0, str(rotV[2]))  # Initial value for rotV3
 
             ##Update data apply_EA
             self.entry_EA_roll.delete(0, "end")
-            self.entry_EA_roll.insert(0, str(roll))  #Initial value for roll
+            self.entry_EA_roll.insert(0, str(roll))  # Initial value for roll
             self.entry_EA_pitch.delete(0, "end")
-            self.entry_EA_pitch.insert(0, str(pitch))  #Initial value for pitch
+            self.entry_EA_pitch.insert(0, str(pitch))  # Initial value for pitch
             self.entry_EA_yaw.delete(0, "end")
-            self.entry_EA_yaw.insert(0, str(yaw))  #Initial value for yaw
+            self.entry_EA_yaw.insert(0, str(yaw))  # Initial value for yaw
 
     def init_cube(self):
         """
         Initialization function that sets up cube's geometry and plot information
         """
         self.M = np.array(
-            [[ -1,  -1, 1],   #Node 0
-            [ -1,   1, 1],    #Node 1
-            [1,   1, 1],      #Node 2
-            [1,  -1, 1],      #Node 3
-            [-1,  -1, -1],    #Node 4
-            [-1,  1, -1],     #Node 5
-            [1,   1, -1],     #Node 6
-            [1,  -1, -1]], dtype=float).transpose() #Node 7
+            [[ -1,  -1, 1],   # Node 0
+            [ -1,   1, 1],    # Node 1
+            [1,   1, 1],      # Node 2
+            [1,  -1, 1],      # Node 3
+            [-1,  -1, -1],    # Node 4
+            [-1,  1, -1],     # Node 5
+            [1,   1, -1],     # Node 6
+            [1,  -1, -1]], dtype=float).transpose() # Node 7
 
         self.con = [
-            [0, 1, 2, 3], #Face 1
-            [4, 5, 6, 7], #Face 2
-            [3, 2, 6, 7], #Face 3
-            [0, 1, 5, 4], #Face 4
-            [0, 3, 7, 4], #Face 5
-            [1, 2, 6, 5]] #Face 6
+            [0, 1, 2, 3], # Face 1
+            [4, 5, 6, 7], # Face 2
+            [3, 2, 6, 7], # Face 3
+            [0, 1, 5, 4], # Face 4
+            [0, 3, 7, 4], # Face 5
+            [1, 2, 6, 5]] # Face 6
 
         faces = []
 
@@ -766,17 +769,17 @@ class Arcball(customtkinter.CTk):
             item.patch.set_visible(False)
 
         self.facesObj = Poly3DCollection(faces, linewidths=.2, edgecolors='k',animated = True)
-        self.facesObj.set_facecolor([(0,0,1,0.9), #Blue
-        (0,1,0,0.9), #Green
-        (.9,.5,0.13,0.9), #Orange
-        (1,0,0,0.9), #Red
-        (1,1,0,0.9), #Yellow
-        (0,0,0,0.9)]) #Black
+        self.facesObj.set_facecolor([(0,0,1,0.9), # Blue
+        (0,1,0,0.9), # Green
+        (.9,.5,0.13,0.9), # Orange
+        (1,0,0,0.9), # Red
+        (1,1,0,0.9), # Yellow
+        (0,0,0,0.9)]) # Black
 
-        #Transfering information to the plot
+        # Transfering information to the plot
         ax.add_collection3d(self.facesObj)
 
-        #Configuring the plot aspect
+        # Configuring the plot aspect
         ax.azim=-90
         ax.roll = 0
         ax.elev= 90   
@@ -787,7 +790,7 @@ class Arcball(customtkinter.CTk):
         ax.disable_mouse_rotation()
         ax.set_axis_off()
 
-        self.pix2unit = 1.0/60 #ratio for drawing the cube 
+        self.pix2unit = 1.0/60 # ratio for drawing the cube 
 
     def update_cube(self):
         """

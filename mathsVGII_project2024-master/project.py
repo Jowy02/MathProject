@@ -228,6 +228,42 @@ class Arcball(customtkinter.CTk):
         self.entry_RotM_33.configure(state="disabled")
         self.entry_RotM_33.grid(row=2, column=3, padx=(2,0), pady=(2,0), sticky="ew")
     
+    def update_entries(self, quaternion, axis, angle, rotV, roll, pitch, yaw):
+        # Quaternion
+        self.entry_quat_0.delete(0, "end")
+        self.entry_quat_0.insert(0, str(quaternion[0]))
+        self.entry_quat_1.delete(0, "end")
+        self.entry_quat_1.insert(0, str(quaternion[1]))
+        self.entry_quat_2.delete(0, "end")
+        self.entry_quat_2.insert(0, str(quaternion[2]))
+        self.entry_quat_3.delete(0, "end")
+        self.entry_quat_3.insert(0, str(quaternion[3]))
+
+        # Axis-Angle
+        self.entry_AA_ax1.delete(0, "end")
+        self.entry_AA_ax1.insert(0, str(axis[0]))
+        self.entry_AA_ax2.delete(0, "end")
+        self.entry_AA_ax2.insert(0, str(axis[1]))
+        self.entry_AA_ax3.delete(0, "end")
+        self.entry_AA_ax3.insert(0, str(axis[2]))
+        self.entry_AA_angle.delete(0, "end")
+        self.entry_AA_angle.insert(0, str(np.degrees(angle)))  # Convertir ángulo a grados
+
+        # Rotation Vector
+        self.entry_rotV_1.delete(0, "end")
+        self.entry_rotV_1.insert(0, str(rotV[0]))
+        self.entry_rotV_2.delete(0, "end")
+        self.entry_rotV_2.insert(0, str(rotV[1]))
+        self.entry_rotV_3.delete(0, "end")
+        self.entry_rotV_3.insert(0, str(rotV[2]))
+
+        # Euler Angles
+        self.entry_EA_roll.delete(0, "end")
+        self.entry_EA_roll.insert(0, str(np.degrees(roll)))  # Convertir a grados
+        self.entry_EA_pitch.delete(0, "end")
+        self.entry_EA_pitch.insert(0, str(np.degrees(pitch)))  # Convertir a grados
+        self.entry_EA_yaw.delete(0, "end")
+        self.entry_EA_yaw.insert(0, str(np.degrees(yaw)))  # Convertir a grados
 
     def resetbutton_pressed(self):
         """
@@ -251,42 +287,17 @@ class Arcball(customtkinter.CTk):
         self.prevQuat = np.array([[1],[0],[0],[0]])
         self.updateText(self.rot,False)
 
-        ##Update data apply_rotV        
-        self.entry_AA_ax1.delete(0, "end")
-        self.entry_AA_ax1.insert(0, "1.0")  #Initial value for axis1
-        self.entry_AA_ax2.delete(0, "end")
-        self.entry_AA_ax2.insert(0, "0.0")  #Initial value for axis2
-        self.entry_AA_ax3.delete(0, "end")
-        self.entry_AA_ax3.insert(0, "0.0")  #Initial value for axis3
-        self.entry_AA_angle.delete(0, "end")
-        self.entry_AA_angle.insert(0, "0.0")  #Initial value for angle
-       
-        ##Update data apply_rotV        
-        self.entry_rotV_1.delete(0, "end")
-        self.entry_rotV_1.insert(0, "0.0")  #Initial value for rotV1
-        self.entry_rotV_2.delete(0, "end")
-        self.entry_rotV_2.insert(0, "0.0")  #Initial value for rotV2
-        self.entry_rotV_3.delete(0, "end")
-        self.entry_rotV_3.insert(0, "0.0")  #Initial value for rotV3
-       
-        ##Update data apply_EA
-        self.entry_EA_roll.delete(0, "end")
-        self.entry_EA_roll.insert(0, "0.0")  #Initial value for roll
-        self.entry_EA_pitch.delete(0, "end")
-        self.entry_EA_pitch.insert(0, "0.0")  #Initial value for pitch
-        self.entry_EA_yaw.delete(0, "end")
-        self.entry_EA_yaw.insert(0, "0.0")  #Initial value for yaw
 
-        ##Update data apply_quat
-        self.entry_quat_0.delete(0, "end")
-        self.entry_quat_0.insert(0, "1.0")  #Initial value for q0
-        self.entry_quat_1.delete(0, "end")
-        self.entry_quat_1.insert(0, "0.0")  #Initial value for q1
-        self.entry_quat_2.delete(0, "end")
-        self.entry_quat_2.insert(0, "0.0")  #Initial value for q2
-        self.entry_quat_3.delete(0, "end")
-        self.entry_quat_3.insert(0, "0.0")  #Initial value for q3
-
+        quat = np.array([1.0,0.0,0.0,0.0])
+        axis = np.array([1.0,0.0,0.0])
+        angle=0.0
+        rotV=axis*angle
+        roll=0.0
+        pitch=0.0
+        yaw=0.0
+        
+        self.update_entries(quat, axis, angle, rotV, roll, pitch, yaw)
+       
 
         pass
 
@@ -297,13 +308,17 @@ class Arcball(customtkinter.CTk):
         """
         #Example on hot to get values from entries:
         angle = (float(self.entry_AA_angle.get()))
-        angle=angle*np.pi/180 #Convert degrees to radians
+        angle= angle * np.pi / 180
         
         #Get the values of the components of the rotation axis
         axis=np.array([float(self.entry_AA_ax1.get()),float(self.entry_AA_ax2.get()), float(self.entry_AA_ax3.get())])
+        
+        #Normalize axis
+        axis_normalize = axis/np.linalg.norm(axis)
 
-        self.M, new_quaternion=self.axisAngle_to_quaternion(axis,angle)
-      
+        # Convertir a matriz de rotación y quaternion
+        self.M, new_quaternion=self.axisAngle_to_quaternion(axis_normalize,angle)
+    
         #Update Rotation
         self.rot=self.M
         self.update_cube()
@@ -312,35 +327,16 @@ class Arcball(customtkinter.CTk):
         self.rot = self.quaternion_to_rotation_matrix(self.prevQuat)
         self.updateText(self.rot,False)
 
+        # Calcular valores actualizados
         #Calculate rotation vector
-        rotV=np.array([angle*axis[0],angle*axis[1],angle*axis[2] ])
+        rotV = angle*axis_normalize
        
         #Calculate Euler angles
         yaw,pitch,roll=self.rotation_matrix_to_euler_angles( self.rot )
 
-        ##Update data apply_rotV        
-        self.entry_rotV_1.delete(0, "end")
-        self.entry_rotV_1.insert(0, str(rotV[0]))  #Initial value for rotV1
-        self.entry_rotV_2.delete(0, "end")
-        self.entry_rotV_2.insert(0, str(rotV[1]))  #Initial value for rotV2
-        self.entry_rotV_3.delete(0, "end")
-        self.entry_rotV_3.insert(0, str(rotV[2]))  #Initial value for rotV3
-        ##Update data apply_EA
-        self.entry_EA_roll.delete(0, "end")
-        self.entry_EA_roll.insert(0, str(roll))  #Initial value for roll
-        self.entry_EA_pitch.delete(0, "end")
-        self.entry_EA_pitch.insert(0, str(pitch))  #Initial value for pitch
-        self.entry_EA_yaw.delete(0, "end")
-        self.entry_EA_yaw.insert(0, str(yaw))  #Initial value for yaw
-        ##Update data apply_quat
-        self.entry_quat_0.delete(0, "end")
-        self.entry_quat_0.insert(0, str(new_quaternion[0]))  #Initial value for q0
-        self.entry_quat_1.delete(0, "end")
-        self.entry_quat_1.insert(0, str(new_quaternion[1]))  #Initial value for q1
-        self.entry_quat_2.delete(0, "end")
-        self.entry_quat_2.insert(0, str(new_quaternion[2]))  #Initial value for q2
-        self.entry_quat_3.delete(0, "end")
-        self.entry_quat_3.insert(0, str(new_quaternion[3]))  #Initial value for q3
+        self.update_entries(new_quaternion, axis, angle, rotV, roll, pitch, yaw)
+
+    
         pass
 
     
@@ -353,7 +349,7 @@ class Arcball(customtkinter.CTk):
 
         #Normalize vector
         vector = r/np.linalg.norm(r)
-        angle=np.linalg.norm(r)
+        angle=np.linalg.norm(vector)
 
         self.M,new_quaternion=self.axisAngle_to_quaternion(vector,angle)
      
@@ -364,40 +360,12 @@ class Arcball(customtkinter.CTk):
         self.fig.canvas.draw_idle()
         self.rot = self.quaternion_to_rotation_matrix(self.prevQuat)
         self.updateText(self.rot,False)
-        
-        #Convert radians to degrees,
-        angle=angle*180/np.pi
 
         #Calculate Euler angles
         yaw,pitch,roll=self.rotation_matrix_to_euler_angles( self.rot )
 
-        ##Update data apply_rotV        
-        self.entry_AA_ax1.delete(0, "end")
-        self.entry_AA_ax1.insert(0, str(vector[0]))  #Initial value for axis1
-        self.entry_AA_ax2.delete(0, "end")
-        self.entry_AA_ax2.insert(0, str(vector[1]))  #Initial value for axis2
-        self.entry_AA_ax3.delete(0, "end")
-        self.entry_AA_ax3.insert(0, str(vector[2]))  #Initial value for axis3
-        self.entry_AA_angle.delete(0, "end")
-        self.entry_AA_angle.insert(0, str(angle))  #Initial value for angle
-        
-        ##Update data apply_EA
-        self.entry_EA_roll.delete(0, "end")
-        self.entry_EA_roll.insert(0, str(roll))  #Initial value for roll
-        self.entry_EA_pitch.delete(0, "end")
-        self.entry_EA_pitch.insert(0, str(pitch))  #Initial value for pitch
-        self.entry_EA_yaw.delete(0, "end")
-        self.entry_EA_yaw.insert(0, str(yaw))  #Initial value for yaw
+        self.update_entries(new_quaternion, vector, angle, r, roll, pitch, yaw)
 
-        ##Update data apply_quat
-        self.entry_quat_0.delete(0, "end")
-        self.entry_quat_0.insert(0, str(new_quaternion[0]))  #Initial value for q0
-        self.entry_quat_1.delete(0, "end")
-        self.entry_quat_1.insert(0, str(new_quaternion[1]))  #Initial value for q1
-        self.entry_quat_2.delete(0, "end")
-        self.entry_quat_2.insert(0, str(new_quaternion[2]))  #Initial value for q2
-        self.entry_quat_3.delete(0, "end")
-        self.entry_quat_3.insert(0, str(new_quaternion[3]))  #Initial value for q3
 
         pass
 
@@ -450,34 +418,9 @@ class Arcball(customtkinter.CTk):
 
         #Calculate rotation vector
         rotV=np.array([angle*axis[0],angle*axis[1],angle*axis[2] ])
+        
+        self.update_entries(new_quaternion, axis, angle, rotV, roll, pitch, yaw)
 
-        ##Update data apply_rotV        
-        self.entry_AA_ax1.delete(0, "end")
-        self.entry_AA_ax1.insert(0, str(axis[0]))  #Initial value for axis1
-        self.entry_AA_ax2.delete(0, "end")
-        self.entry_AA_ax2.insert(0, str(axis[1]))  #Initial value for axis2
-        self.entry_AA_ax3.delete(0, "end")
-        self.entry_AA_ax3.insert(0, str(axis[2]))  #Initial value for axis3
-        self.entry_AA_angle.delete(0, "end")
-        self.entry_AA_angle.insert(0, str(angle))  #Initial value for angle
-
-        ##Update data apply_rotV        
-        self.entry_rotV_1.delete(0, "end")
-        self.entry_rotV_1.insert(0, str(rotV[0]))  #Initial value for rotV1
-        self.entry_rotV_2.delete(0, "end")
-        self.entry_rotV_2.insert(0, str(rotV[1]))  #Initial value for rotV2
-        self.entry_rotV_3.delete(0, "end")
-        self.entry_rotV_3.insert(0, str(rotV[2]))  #Initial value for rotV3
-
-        ##Update data apply_quat
-        self.entry_quat_0.delete(0, "end")
-        self.entry_quat_0.insert(0, str(new_quaternion[0]))  #Initial value for q0
-        self.entry_quat_1.delete(0, "end")
-        self.entry_quat_1.insert(0, str(new_quaternion[1]))  #Initial value for q1
-        self.entry_quat_2.delete(0, "end")
-        self.entry_quat_2.insert(0, str(new_quaternion[2]))  #Initial value for q2
-        self.entry_quat_3.delete(0, "end")
-        self.entry_quat_3.insert(0, str(new_quaternion[3]))  #Initial value for q3
         pass
 
     
@@ -492,8 +435,8 @@ class Arcball(customtkinter.CTk):
         q3 = float(self.entry_quat_3.get())
 
         #The quaternion entered by the user
-        user_quat = np.array([q0, q1, q2, q3])
-        user_quat=user_quat/np.linalg.norm(user_quat)
+        enter_quat = np.array([q0, q1, q2, q3])
+        user_quat=enter_quat/np.linalg.norm(enter_quat)
       
         #Combine the new quaternion with the previous quaternion
         self.prevQuat =  user_quat
@@ -522,40 +465,8 @@ class Arcball(customtkinter.CTk):
         #Calculate rotation vector
         rotV=np.array([angle*axis[0],angle*axis[1],angle*axis[2] ])
 
-        self.entry_quat_0.delete(0, "end")
-        self.entry_quat_0.insert(0, str(float(self.prevQuat[0])))  #Initial value for q0
-        self.entry_quat_1.delete(0, "end")
-        self.entry_quat_1.insert(0, str(float(self.prevQuat[1])))  #Initial value for q1
-        self.entry_quat_2.delete(0, "end")
-        self.entry_quat_2.insert(0, str(float(self.prevQuat[2])))  #Initial value for q2
-        self.entry_quat_3.delete(0, "end")
-        self.entry_quat_3.insert(0, str(float(self.prevQuat[3])))  #Initial value for q3
+        self.update_entries(enter_quat, axis, angle, rotV, roll, pitch, yaw)
 
-        ##Update data apply_rotV        
-        self.entry_AA_ax1.delete(0, "end")
-        self.entry_AA_ax1.insert(0, str(axis[0]))  #Initial value for axis1
-        self.entry_AA_ax2.delete(0, "end")
-        self.entry_AA_ax2.insert(0, str(axis[1]))  #Initial value for axis2
-        self.entry_AA_ax3.delete(0, "end")
-        self.entry_AA_ax3.insert(0, str(axis[2]))  #Initial value for axis3
-        self.entry_AA_angle.delete(0, "end")
-        self.entry_AA_angle.insert(0, str(angle))  #Initial value for angle
-
-        ##Update data apply_rotV        
-        self.entry_rotV_1.delete(0, "end")
-        self.entry_rotV_1.insert(0, str(rotV[0]))  #Initial value for rotV1
-        self.entry_rotV_2.delete(0, "end")
-        self.entry_rotV_2.insert(0, str(rotV[1]))  #Initial value for rotV2
-        self.entry_rotV_3.delete(0, "end")
-        self.entry_rotV_3.insert(0, str(rotV[2]))  #Initial value for rotV3
-
-        ##Update data apply_EA
-        self.entry_EA_roll.delete(0, "end")
-        self.entry_EA_roll.insert(0, str(roll))  #Initial value for roll
-        self.entry_EA_pitch.delete(0, "end")
-        self.entry_EA_pitch.insert(0, str(pitch))  #Initial value for pitch
-        self.entry_EA_yaw.delete(0, "end")
-        self.entry_EA_yaw.insert(0, str(yaw))  #Initial value for yaw
         pass
 
     def rotationMatrix_to_axisAngle(self,R):
@@ -605,15 +516,13 @@ class Arcball(customtkinter.CTk):
     
     def axisAngle_to_quaternion(self,axis,angle):
         #Calculate the magnitude (norm) of the rotation axis vector
-        magnitud = np.linalg.norm(axis)
-        if(magnitud == 0): return axis
-        else: vectorN = axis/ magnitud #Normalize the axis vector
-        
+        axis = axis / np.linalg.norm(axis)
+
         #Quaternion formula:
         new_q=np.array([[np.cos(angle/2)],
-                        [np.sin(angle/2)*vectorN[0]],
-                        [np.sin(angle/2)*vectorN[1]],
-                        [np.sin(angle/2)*vectorN[2]]])
+                        [np.sin(angle/2)*axis[0]],
+                        [np.sin(angle/2)*axis[1]],
+                        [np.sin(angle/2)*axis[2]]])
         
         #Combine the new quaternion with the previous quaternion
         self.prevQuat = new_q

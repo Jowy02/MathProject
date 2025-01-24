@@ -261,11 +261,11 @@ class Arcball(customtkinter.CTk):
 
         # Euler Angles
         self.entry_EA_roll.delete(0, "end")
-        self.entry_EA_roll.insert(0, str(np.degrees(roll)))  # Convertir a grados
+        self.entry_EA_roll.insert(0, str(roll))  # Convertir a grados
         self.entry_EA_pitch.delete(0, "end")
-        self.entry_EA_pitch.insert(0, str(np.degrees(pitch)))  # Convertir a grados
+        self.entry_EA_pitch.insert(0, str(pitch))  # Convertir a grados
         self.entry_EA_yaw.delete(0, "end")
-        self.entry_EA_yaw.insert(0, str(np.degrees(yaw)))  # Convertir a grados
+        self.entry_EA_yaw.insert(0, str(yaw))  # Convertir a grados
 
     def resetbutton_pressed(self):
         """
@@ -382,14 +382,14 @@ class Arcball(customtkinter.CTk):
         Event triggered function on the event of a push on the button button_EA
         """
         # Get the values
-        roll= float(self.entry_EA_roll.get())
-        pitch=float(self.entry_EA_pitch.get())
-        yaw= float(self.entry_EA_yaw.get())
+        roll_degree= float(self.entry_EA_roll.get())
+        pitch_degree=float(self.entry_EA_pitch.get())
+        yaw_degree= float(self.entry_EA_yaw.get())
 
         # Convert angle from degrees
-        roll=roll*np.pi/180
-        pitch=pitch*np.pi/180
-        yaw=yaw*np.pi/180
+        roll=(roll_degree*np.pi)/180
+        pitch=(pitch_degree*np.pi)/180
+        yaw=(yaw_degree*np.pi)/180
 
         # Define the rotation matrix for yaw 
         Rz=np.array([
@@ -426,7 +426,7 @@ class Arcball(customtkinter.CTk):
         # Calculate rotation vector
         rotV=np.array([angle*axis[0],angle*axis[1],angle*axis[2] ])
         
-        self.update_entries(new_quaternion, axis, angle, rotV, roll, pitch, yaw)
+        self.update_entries(new_quaternion, axis, angle, rotV, roll_degree, pitch_degree, yaw_degree)
 
         pass
 
@@ -561,7 +561,7 @@ class Arcball(customtkinter.CTk):
             roll=np.arctan2(R[0,1],R[0,2]) # phi
             yaw=0 # 0 degrees #psi
 
-        return (yaw, pitch, roll)
+        return (np.degrees(yaw),np.degrees(pitch), np.degrees(roll))
 
     def onclick(self, event):
         """

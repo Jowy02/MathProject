@@ -348,30 +348,31 @@ class Arcball(customtkinter.CTk):
         """
         # Rotation vector
         r=np.array([float(self.entry_rotV_1.get()),float(self.entry_rotV_2.get()), float(self.entry_rotV_3.get())])
+        
+        norm = np.linalg.norm(r)
+        # Avoid errors on calculations
+        if(norm != 0.0):
+            # Normalize vector
+            vector = r/norm
+            angle=np.linalg.norm(vector)
 
-        # Normalize vector
-        vector = r/np.linalg.norm(r)
-        angle=np.linalg.norm(vector)
+            self.M,new_quaternion=self.axisAngle_to_quaternion(vector,angle)
+        
+            # Update Rotation
+            self.rot=self.M
+            self.update_cube()
+        
+            self.fig.canvas.draw_idle()
+            self.rot = self.quaternion_to_rotation_matrix(self.prevQuat)
+            self.updateText(self.rot,False)
 
-        self.M,new_quaternion=self.axisAngle_to_quaternion(vector,angle)
-     
-        # Update Rotation
-        self.rot=self.M
-        self.update_cube()
-       
-        self.fig.canvas.draw_idle()
-        self.rot = self.quaternion_to_rotation_matrix(self.prevQuat)
-        self.updateText(self.rot,False)
+            # Calculate updated values
+            # Calculate Euler angles
+            yaw,pitch,roll=self.rotation_matrix_to_euler_angles( self.rot )
 
-        # Calculate updated values
-        # Calculate Euler angles
-        yaw,pitch,roll=self.rotation_matrix_to_euler_angles( self.rot )
-
-        self.update_entries(new_quaternion, vector, angle, r, roll, pitch, yaw)
-
+            self.update_entries(new_quaternion, vector, angle, r, roll, pitch, yaw)
 
         pass
-
     
     def apply_EA(self):
         """
@@ -554,9 +555,7 @@ class Arcball(customtkinter.CTk):
             yaw=0 # 0 degrees #psi
         
         # Change to degrees
-        yaw=yaw*180/np.pi
-        pitch=pitch*180/np.pi
-        roll=roll*180/np.pi
+
         return (yaw, pitch, roll)
 
     def onclick(self, event):

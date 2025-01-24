@@ -261,11 +261,11 @@ class Arcball(customtkinter.CTk):
 
         # Euler Angles
         self.entry_EA_roll.delete(0, "end")
-        self.entry_EA_roll.insert(0, str(np.degrees(roll)))  # Convertir a grados
+        self.entry_EA_roll.insert(0, str(roll))  # Convertir a grados
         self.entry_EA_pitch.delete(0, "end")
-        self.entry_EA_pitch.insert(0, str(np.degrees(pitch)))  # Convertir a grados
+        self.entry_EA_pitch.insert(0, str(pitch))  # Convertir a grados
         self.entry_EA_yaw.delete(0, "end")
-        self.entry_EA_yaw.insert(0, str(np.degrees(yaw)))  # Convertir a grados
+        self.entry_EA_yaw.insert(0, str(yaw))  # Convertir a grados
 
     def resetbutton_pressed(self):
         """
